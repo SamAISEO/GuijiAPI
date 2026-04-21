@@ -7,9 +7,10 @@
 set -e
 
 API_BASE_URL="https://api.guijiapi.net"
-MODEL_1="claude-sonnet-4-6-20260218"
-MODEL_2="claude-opus-4-6-20260205"
-MODEL_3="claude-sonnet-4-5-20250514"
+MODEL_1="claude-sonnet-4-6"
+MODEL_2="claude-opus-4-7"
+MODEL_3="claude-opus-4-6"
+MODEL_4="claude-sonnet-4-5-20250929"
 NODE_MIN_VER="16.0.0"
 PROVIDER_NAME="anthropic"
 
@@ -59,9 +60,16 @@ strip_line_breaks() {
   printf '%s' "$1" | tr -d '\r\n'
 }
 
-# 版本比较：$1 >= $2 返回 true
+# 版本比较：$1 >= $2 返回 true（兼容 macOS，不依赖 sort -V）
 version_gte() {
-  [ "$(printf '%s\n' "$2" "$1" | sort -V | head -1)" = "$2" ]
+  awk -v a="$1" -v b="$2" 'BEGIN{
+    n=split(a,A,"."); m=split(b,B,".")
+    for(i=1;i<=3;i++){
+      ai=i<=n?A[i]+0:0; bi=i<=m?B[i]+0:0
+      if(ai>bi) exit 0; if(ai<bi) exit 1
+    }
+    exit 0
+  }'
 }
 
 is_official_base_url() {
@@ -78,6 +86,105 @@ normalize_base_url() {
   url="${url%/v1/messages}"
   url="${url%/v1}"
   printf '%s\n' "${url%/}"
+}
+
+# 检测认证冲突：ANTHROPIC_AUTH_TOKEN 环境变量或 OAuth 登录凭证
+has_auth_conflict() {
+  # 检查环境变量
+  [ -n "$ANTHROPIC_AUTH_TOKEN" ] && return 0
+
+  # 检查 OAuth 登录凭证文件
+  [ -f "$HOME/.claude/.credentials.json" ] && return 0
+
+  # 检查 settings.json 中的 AUTH_TOKEN
+  local settings_file="$HOME/.claude/settings.json"
+  if [ -f "$settings_file" ]; then
+    grep -q 'ANTHROPIC_AUTH_TOKEN' "$settings_file" 2>/dev/null && return 0
+  fi
+
+  return 1
+}
+
+# 清理认证冲突
+cleanup_auth_conflict() {
+  warn "检测到认证冲突："
+
+  if [ -n "$ANTHROPIC_AUTH_TOKEN" ]; then
+    warn "  - 环境变量 ANTHROPIC_AUTH_TOKEN 已设置"
+  fi
+
+  if [ -f "$HOME/.claude/.credentials.json" ]; then
+    warn "  - OAuth 登录凭证存在: ~/.claude/.credentials.json"
+  fi
+
+  local settings_file="$HOME/.claude/settings.json"
+  if [ -f "$settings_file" ] && grep -q 'ANTHROPIC_AUTH_TOKEN' "$settings_file" 2>/dev/null; then
+    warn "  - settings.json 中存在 ANTHROPIC_AUTH_TOKEN"
+  fi
+
+  warn ""
+  warn "⚠ 认证冲突会导致 Claude Code 无法正确使用硅基API"
+  warn "建议：执行 'claude /logout' 清除 OAuth 登录凭证"
+  warn "       或让本脚本自动清理冲突配置"
+
+  CONFIRM=$(read_input "是否自动清理认证冲突？(Y/n，默认 Y): ")
+  CONFIRM="${CONFIRM:-Y}"
+  case "$CONFIRM" in
+    [Nn]*)
+      warn "跳过清理，安装完成后请手动清理："
+      warn "  1. 执行 'claude /logout' 清除 OAuth 登录凭证"
+      warn "  2. 在终端中执行: unset ANTHROPIC_AUTH_TOKEN"
+      warn "  3. 重启 Claude Code"
+      return 1
+      ;;
+  esac
+
+  # 清理 OAuth 凭证
+  if [ -f "$HOME/.claude/.credentials.json" ]; then
+    info "删除 OAuth 登录凭证..."
+    rm -f "$HOME/.claude/.credentials.json"
+    success "已删除 ~/.claude/.credentials.json"
+  fi
+
+  # 清理环境变量中的 AUTH_TOKEN
+  if [ -n "$ANTHROPIC_AUTH_TOKEN" ]; then
+    info "清除 ANTHROPIC_AUTH_TOKEN 环境变量..."
+    for rc_file in "$HOME/.bashrc" "$HOME/.bash_profile" "$HOME/.profile" "$HOME/.zshrc"; do
+      if [ -f "$rc_file" ]; then
+        sed -i '/ANTHROPIC_AUTH_TOKEN/d' "$rc_file"
+      fi
+    done
+    unset ANTHROPIC_AUTH_TOKEN 2>/dev/null || true
+    success "已清除 ANTHROPIC_AUTH_TOKEN"
+  fi
+
+  # 清理 settings.json 中的 AUTH_TOKEN
+  if [ -f "$settings_file" ] && command -v python3 &>/dev/null; then
+    info "清理 settings.json 中的认证冲突..."
+    python3 - "$settings_file" <<'PYEOF'
+import json, sys
+path = sys.argv[1]
+try:
+    with open(path) as f:
+        d = json.load(f)
+    env = d.get('env', {})
+    if 'ANTHROPIC_AUTH_TOKEN' in env:
+        env.pop('ANTHROPIC_AUTH_TOKEN')
+        print("  已移除 env.ANTHROPIC_AUTH_TOKEN")
+    if env:
+        d['env'] = env
+    elif 'env' in d:
+        del d['env']
+    with open(path, 'w') as f:
+        json.dump(d, f, indent=2)
+except Exception as e:
+    print(f"  处理失败: {e}")
+PYEOF
+    success "settings.json 已清理"
+  fi
+
+  success "认证冲突已清理"
+  return 0
 }
 
 file_has_non_official_url() {
@@ -301,38 +408,7 @@ install_or_skip_npm_pkg() {
   fi
 }
 
-# ── 1. 询问 API Key ──────────────────────────────────────────
-step "API 配置"
-echo -e "${CYAN}请在硅基API官网获取您的 API Key: ${API_BASE_URL}${NC}"
-API_KEY=$(read_secret "请输入 API Key（输入时不显示）: ")
-API_KEY=$(strip_line_breaks "$API_KEY")
-if [ -z "$API_KEY" ]; then
-  error "API Key 不能为空"
-fi
-success "API Key 已设置"
-
-# ── 2. 选择模型 ──────────────────────────────────────────────
-step "选择默认模型"
-echo "  1) ${MODEL_1}（推荐，速度快）"
-echo "  2) ${MODEL_2}（最强，较慢）"
-echo "  3) ${MODEL_3}（稳定版本）"
-echo "  4) 手动输入其他模型名"
-echo ""
-
-MODEL_CHOICE=$(read_input "请选择 (1/2/3/4，默认 1): ")
-MODEL_CHOICE="${MODEL_CHOICE:-1}"
-
-case "$MODEL_CHOICE" in
-  1) MODEL="$MODEL_1" ;;
-  2) MODEL="$MODEL_2" ;;
-  3) MODEL="$MODEL_3" ;;
-  4) MODEL=$(read_input "请输入模型名: ") ;;
-  *) warn "无效选择，使用默认模型 1"; MODEL="$MODEL_1" ;;
-esac
-MODEL=$(strip_line_breaks "$MODEL")
-success "已选择模型: $MODEL"
-
-# ── 2.5 检测并清理第三方配置 ─────────────────────────────────
+# ── 1. 检测并清理第三方配置 ──────────────────────────────────
 step "检测现有配置"
 if is_third_party_config; then
   cleanup_third_party
@@ -341,7 +417,15 @@ else
   skip "未检测到第三方配置，无需清理"
 fi
 
-# ── 3. 检测 Node.js ──────────────────────────────────────────
+# ── 1.5 检测认证冲突 ────────────────────────────────────────────
+step "检测认证冲突"
+if has_auth_conflict; then
+  cleanup_auth_conflict
+else
+  skip "未检测到认证冲突"
+fi
+
+# ── 2. 检测 Node.js ──────────────────────────────────────────
 step "检查 Node.js 环境"
 
 install_node() {
@@ -380,7 +464,7 @@ if ! command -v npm &>/dev/null; then
   error "npm 未找到，请检查 Node.js 安装"
 fi
 
-# ── 4. 检测并安装/升级 claude-code 和 ccr ───────────────────
+# ── 3. 检测并安装/升级 claude-code 和 ccr ───────────────────
 step "检查 Claude Code 相关工具"
 
 # 判断是否需要 sudo
@@ -402,7 +486,51 @@ if ! command -v claude &>/dev/null; then
   fi
 fi
 
-# ── 5. 生成 config.json ──────────────────────────────────────
+# ── 4. 询问 API Key ──────────────────────────────────────────
+step "API 配置"
+echo -e "${CYAN}请在硅基API官网获取您的 API Key: ${API_BASE_URL}${NC}"
+API_KEY=$(read_secret "请输入 API Key（输入时不显示）: ")
+API_KEY=$(strip_line_breaks "$API_KEY")
+if [ -z "$API_KEY" ]; then
+  error "API Key 不能为空"
+fi
+# 格式校验：至少10个字符，仅含字母、数字、连字符、下划线
+if ! printf '%s' "$API_KEY" | grep -qE '^[A-Za-z0-9_-]{10,}$'; then
+  warn "API Key 格式可能不正确（含特殊字符或过短），请确认后继续"
+fi
+success "API Key 已设置"
+
+# ── 5. 选择模型 ──────────────────────────────────────────────
+step "选择默认模型"
+echo "  1) ${MODEL_1}（推荐，速度快）"
+echo "  2) ${MODEL_2}（最新最强，较慢）"
+echo "  3) ${MODEL_3}（旗舰级）"
+echo "  4) ${MODEL_4}（稳定版本）"
+echo "  5) 手动输入其他模型名"
+echo ""
+
+MODEL_CHOICE=$(read_input "请选择 (1/2/3/4/5，默认 1): ")
+MODEL_CHOICE="${MODEL_CHOICE:-1}"
+
+case "$MODEL_CHOICE" in
+  1) MODEL="$MODEL_1" ;;
+  2) MODEL="$MODEL_2" ;;
+  3) MODEL="$MODEL_3" ;;
+  4) MODEL="$MODEL_4" ;;
+  5)
+    MODEL=$(read_input "请输入模型名: ")
+    MODEL=$(strip_line_breaks "$MODEL")
+    if [ -z "$MODEL" ]; then
+      warn "模型名为空，使用默认模型"
+      MODEL="$MODEL_1"
+    fi
+    ;;
+  *) warn "无效选择，使用默认模型 1"; MODEL="$MODEL_1" ;;
+esac
+MODEL=$(strip_line_breaks "$MODEL")
+success "已选择模型: $MODEL"
+
+# ── 6. 生成 config.json ──────────────────────────────────────
 step "生成配置文件"
 
 CONFIG_DIR="$HOME/.claude-code-router"
@@ -463,6 +591,7 @@ with open(path, "w", encoding="utf-8") as f:
     json.dump(config, f, indent=2)
 PYEOF
   else
+    # API_KEY 中可能含引号等特殊字符，此路径已通过格式校验过滤
     cat > "$CONFIG_FILE" <<EOF
 {
   "LOG": false,
@@ -506,7 +635,7 @@ PYEOF
   info "已配置 API 端点: ${GENERATED_URL}"
 fi
 
-# ── 5.5 写入环境变量到 shell RC ─────────────────────────────
+# ── 7. 写入环境变量到 shell RC ─────────────────────────────
 step "配置环境变量"
 
 if [ -n "$ZSH_VERSION" ] || [ "$SHELL" = "/bin/zsh" ]; then
@@ -630,7 +759,7 @@ PYEOF
   success "已同步 ~/.claude/settings.json"
 fi
 
-# ── 5.6 写入 ~/.claude.json 跳过 Onboarding ──────────────────
+# ── 8. 写入 ~/.claude.json 跳过 Onboarding ──────────────────
 step "初始化 Claude Code 状态"
 
 CLAUDE_JSON="$HOME/.claude.json"
@@ -674,8 +803,30 @@ CLAUDEJSON
     success "已覆盖写入 ~/.claude.json"
   fi
 fi
+# 限制访问权限，防止 API Key 泄露
+chmod 600 "$CLAUDE_JSON"
 
-# ── 6. 完成 ──────────────────────────────────────────────────
+# ── 9. API 连通性验证 ─────────────────────────────────────────
+step "验证 API 连通性"
+
+if command -v curl &>/dev/null; then
+  HTTP_CODE=$(curl -sf -o /dev/null -w '%{http_code}' \
+    --max-time 10 \
+    -H "x-api-key: ${API_KEY}" \
+    -H "anthropic-version: 2023-06-01" \
+    "${API_BASE_URL}/v1/models" 2>/dev/null || echo "000")
+  case "$HTTP_CODE" in
+    200) success "API 连通性验证通过 (HTTP ${HTTP_CODE})" ;;
+    401) warn "API Key 无效或已过期 (HTTP 401)，请检查 Key 是否正确" ;;
+    403) warn "API Key 无权限 (HTTP 403)，请确认账号状态" ;;
+    000) warn "连通性检查超时或网络不可达，请手动验证 API Key" ;;
+    *)   warn "API 连通性返回 HTTP ${HTTP_CODE}，请检查配置是否正确" ;;
+  esac
+else
+  skip "未找到 curl，跳过连通性验证"
+fi
+
+# ── 10. 完成 ──────────────────────────────────────────────────
 step "完成"
 
 GLOBAL_BIN=$(get_npm_global_bin)
@@ -706,13 +857,17 @@ fi
 
 echo -e "${CYAN}${BOLD}── 当前环境变量诊断 ────────────────────────────────${NC}"
 _key_display="${ANTHROPIC_API_KEY:0:10}..."
-_token_display="${ANTHROPIC_AUTH_TOKEN:-(未设置，正常)}"
+_token_display="${ANTHROPIC_AUTH_TOKEN:-(未设置)}"
 echo "  ANTHROPIC_API_KEY  : ${_key_display}"
 echo "  ANTHROPIC_BASE_URL : ${ANTHROPIC_BASE_URL}"
 echo "  ANTHROPIC_AUTH_TOKEN: ${_token_display}"
 if [ -n "$ANTHROPIC_AUTH_TOKEN" ]; then
-  warn "ANTHROPIC_AUTH_TOKEN 仍然存在！请检查配置"
+  warn "⚠ ANTHROPIC_AUTH_TOKEN 仍然存在！请在安装完成后执行: claude /logout"
 else
-  success "无 Auth Token 冲突，Claude Code 将使用 ANTHROPIC_API_KEY"
+  success "无 Auth Token 冲突，Claude Code 将正确使用硅基API"
+fi
+# 检查 OAuth 凭证残留
+if [ -f "$HOME/.claude/.credentials.json" ]; then
+  warn "⚠ OAuth 登录凭证残留！请在安装完成后执行: claude /logout"
 fi
 echo ""
