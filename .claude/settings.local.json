@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:yunhefuture.feishu.cn)",
+      "WebFetch(domain:api.guijiapi.net)",
+      "Bash(curl -s -L \"https://yunhefuture.feishu.cn/wiki/M0jnwFN7mihTjwkpEgPcVZORnFf\")",
+      "Bash(curl -s -L \"https://api.guijiapi.net\")",
+      "WebSearch",
+      "Bash(curl -s \"https://raw.githubusercontent.com/anthropics/claude-code/main/README.md\")",
+      "Bash(curl *)",
+      "Bash(pandoc --track-changes=all \"c:\\\\Users\\\\Administrator\\\\Desktop\\\\Claude Code安装及对接问问API指南.docx\" -o /tmp/guide.md)",
+      "Read(//tmp/**)",
+      "Bash(git init *)",
+      "Bash(git add *)"
+    ]
+  }
+}
