@@ -246,31 +246,30 @@ if (Test-Path $CLAUDE_SETTINGS) {
     $settings = [PSCustomObject]@{}
 }
 
-# 确保 env 属性存在
-if (-not $settings.PSObject.Properties.Match('env')) {
-    $settings | Add-Member -MemberType NoteProperty -Name "env" -Value ([PSCustomObject]@{}) -Force
+# 创建新的 env 对象（避免类型不一致问题）
+$newEnv = [PSCustomObject]@{
+    ANTHROPIC_API_KEY = $API_KEY
+    ANTHROPIC_BASE_URL = $API_BASE_URL
 }
 
-# 设置 env 中的属性
-$envObj = $settings.env
-if (-not $envObj.PSObject.Properties.Match('ANTHROPIC_API_KEY')) {
-    $envObj | Add-Member -MemberType NoteProperty -Name "ANTHROPIC_API_KEY" -Value $API_KEY -Force
-} else {
-    $envObj.ANTHROPIC_API_KEY = $API_KEY
+# 移除旧的 env 属性（如果存在）
+if ($settings.PSObject.Properties.Match('env')) {
+    $settings.PSObject.Properties.Remove('env')
 }
-if (-not $envObj.PSObject.Properties.Match('ANTHROPIC_BASE_URL')) {
-    $envObj | Add-Member -MemberType NoteProperty -Name "ANTHROPIC_BASE_URL" -Value $API_BASE_URL -Force
-} else {
-    $envObj.ANTHROPIC_BASE_URL = $API_BASE_URL
-}
-if ($envObj.PSObject.Properties.Match('ANTHROPIC_AUTH_TOKEN')) {
-    $envObj.PSObject.Properties.Remove('ANTHROPIC_AUTH_TOKEN')
-}
+
+# 添加新的 env
+$settings | Add-Member -MemberType NoteProperty -Name "env" -Value $newEnv -Force
 
 # 移除顶层可能冲突的属性
-$settings.PSObject.Properties.Remove('apiKey')
-$settings.PSObject.Properties.Remove('authToken')
-$settings.PSObject.Properties.Remove('sessionToken')
+if ($settings.PSObject.Properties.Match('apiKey')) {
+    $settings.PSObject.Properties.Remove('apiKey')
+}
+if ($settings.PSObject.Properties.Match('authToken')) {
+    $settings.PSObject.Properties.Remove('authToken')
+}
+if ($settings.PSObject.Properties.Match('sessionToken')) {
+    $settings.PSObject.Properties.Remove('sessionToken')
+}
 
 $settings | ConvertTo-Json -Depth 10 | Set-Content -Path $CLAUDE_SETTINGS -Encoding UTF8
 Write-Success "已同步 ~/.claude/settings.json"
