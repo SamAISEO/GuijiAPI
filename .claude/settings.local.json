@@ -1,9 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "WebFetch(domain:yunhefuture.feishu.cn)",
       "WebFetch(domain:api.guijiapi.net)",
-      "Bash(curl -s -L \"https://yunhefuture.feishu.cn/wiki/M0jnwFN7mihTjwkpEgPcVZORnFf\")",
       "Bash(curl -s -L \"https://api.guijiapi.net\")",
       "WebSearch",
       "Bash(curl -s \"https://raw.githubusercontent.com/anthropics/claude-code/main/README.md\")",
@@ -20,7 +18,8 @@
       "Bash(claude *)",
       "Bash(chmod +x *)",
       "Bash(cmd *)",
-      "Bash(git rm *)"
+      "Bash(git rm *)",
+      "Bash(git commit *)"
     ]
   }
 }

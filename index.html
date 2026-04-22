@@ -1,369 +1,589 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Claude Code 安装指南 - 硅基API</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>硅基API — 500+ 大模型，一个 API Key 全搞定</title>
+<meta name="description" content="硅基API 聚合 500+ 主流大模型，包括 Claude、GPT、Gemini、Llama 等，国内直连，完全兼容 OpenAI / Anthropic SDK。">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --p1:#8b5cf6;--p2:#6d28d9;--p3:#a78bfa;
+  --b1:#3b82f6;--b2:#1d4ed8;--b3:#93c5fd;
+  --bg:#05050f;--bg2:#08080f;--bg3:#0d0d1e;
+  --card:#0c0c1e;--card2:#10102a;
+  --border:rgba(139,92,246,.18);--border2:rgba(139,92,246,.42);
+  --text:#eeeeff;--muted:#8892a4;--muted2:#5a6478;
+  --green:#10b981;--cyan:#06b6d4;--orange:#f59e0b;
+  --r:14px;
+}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden;line-height:1.6}
+::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:var(--bg)}::-webkit-scrollbar-thumb{background:var(--p2);border-radius:3px}
+a{text-decoration:none;color:inherit}
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 40px 20px;
-        }
+/* ══ NAV ══ */
+.nav{position:fixed;top:0;left:0;right:0;z-index:200;height:66px;display:flex;align-items:center;justify-content:space-between;padding:0 clamp(20px,5vw,80px);transition:background .3s,border-color .3s}
+.nav.sc{background:rgba(5,5,15,.88);backdrop-filter:blur(20px);border-bottom:1px solid var(--border)}
+.logo{display:flex;align-items:center;gap:11px}
+.logo-mark{width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,var(--p1),var(--b1));display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:900;color:#fff;box-shadow:0 0 18px rgba(139,92,246,.5);flex-shrink:0}
+.logo-name{font-size:17px;font-weight:700}.logo-name em{font-style:normal;color:var(--p3)}
+.nav-links{display:flex;align-items:center;gap:4px;list-style:none}
+.nav-links a{padding:7px 15px;border-radius:8px;font-size:14px;font-weight:500;color:var(--muted);transition:all .2s}
+.nav-links a:hover{color:var(--text);background:rgba(255,255,255,.05)}
+.nav-cta{padding:8px 20px !important;background:linear-gradient(135deg,var(--p1),var(--b1)) !important;color:#fff !important;border-radius:9px !important;font-weight:600 !important;box-shadow:0 0 16px rgba(139,92,246,.35);transition:all .25s !important}
+.nav-cta:hover{transform:translateY(-1px);box-shadow:0 4px 22px rgba(139,92,246,.55) !important}
+.hbg{display:none;flex-direction:column;gap:5px;background:none;border:none;cursor:pointer;padding:6px}
+.hbg span{display:block;width:22px;height:2px;background:var(--text);border-radius:2px;transition:all .3s}
 
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: #fff;
-            border-radius: 16px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            overflow: hidden;
-        }
+/* ══ HERO ══ */
+.hero{position:relative;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:120px clamp(20px,6vw,80px) 80px;text-align:center;overflow:hidden}
+.h-bg{position:absolute;inset:0;background:radial-gradient(ellipse 90% 70% at 50% -5%,rgba(109,40,217,.22) 0%,transparent 55%),radial-gradient(ellipse 50% 40% at 85% 85%,rgba(6,182,212,.12) 0%,transparent 50%),radial-gradient(ellipse 45% 45% at 15% 75%,rgba(139,92,246,.1) 0%,transparent 50%)}
+.h-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(139,92,246,.05) 1px,transparent 1px),linear-gradient(90deg,rgba(139,92,246,.05) 1px,transparent 1px);background-size:56px 56px;mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 20%,transparent 75%)}
+.h-orb1{position:absolute;top:-80px;left:50%;transform:translateX(-50%);width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(109,40,217,.25) 0%,transparent 70%);filter:blur(70px);pointer-events:none}
+.h-orb2{position:absolute;bottom:-50px;right:-80px;width:450px;height:450px;border-radius:50%;background:radial-gradient(circle,rgba(6,182,212,.15) 0%,transparent 70%);filter:blur(60px);pointer-events:none}
 
-        .header {
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-            color: #fff;
-            padding: 40px;
-            text-align: center;
-        }
+.h-inner{position:relative;z-index:1;max-width:860px}
 
-        .header h1 {
-            font-size: 28px;
-            margin-bottom: 10px;
-        }
+.h-pill{display:inline-flex;align-items:center;gap:8px;padding:6px 18px;border-radius:999px;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.32);font-size:13px;color:var(--p3);font-weight:500;margin-bottom:30px;animation:rise .7s ease both}
+.h-pill .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:blink 2s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
 
-        .header p {
-            color: #a0a0a0;
-            font-size: 14px;
-        }
+.h-title{font-size:clamp(42px,7.5vw,88px);font-weight:900;line-height:1.08;letter-spacing:-2.5px;margin-bottom:26px;animation:rise .7s ease .1s both}
+.h-title .t1{display:block;color:var(--text)}
+.h-title .tg{display:block;background:linear-gradient(135deg,#c4b5fd 0%,#a78bfa 25%,#60a5fa 60%,#34d399 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 
-        .content {
-            padding: 40px;
-        }
+.h-sub{font-size:clamp(16px,2vw,20px);color:var(--muted);max-width:580px;margin:0 auto 44px;line-height:1.75;animation:rise .7s ease .2s both}
+.h-sub strong{color:var(--text);font-weight:600}
 
-        .section {
-            margin-bottom: 40px;
-        }
+.h-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-bottom:60px;animation:rise .7s ease .3s both}
+.btn-glow{display:inline-flex;align-items:center;gap:8px;padding:15px 34px;border-radius:12px;background:linear-gradient(135deg,var(--p1),var(--b1));color:#fff;font-size:16px;font-weight:700;box-shadow:0 4px 28px rgba(139,92,246,.45),0 0 0 1px rgba(139,92,246,.25);transition:all .25s}
+.btn-glow:hover{transform:translateY(-3px);box-shadow:0 10px 40px rgba(139,92,246,.6)}
+.btn-ghost{display:inline-flex;align-items:center;gap:8px;padding:15px 34px;border-radius:12px;background:rgba(255,255,255,.04);border:1.5px solid rgba(255,255,255,.12);color:var(--text);font-size:16px;font-weight:600;transition:all .25s}
+.btn-ghost:hover{border-color:var(--p3);color:var(--p3);background:rgba(139,92,246,.08);transform:translateY(-2px)}
 
-        .section h2 {
-            font-size: 20px;
-            color: #1a1a2e;
-            margin-bottom: 20px;
-            padding-bottom: 10px;
-            border-bottom: 2px solid #667eea;
-        }
+.h-stats{display:flex;gap:0;background:rgba(255,255,255,.03);border:1px solid var(--border);border-radius:16px;overflow:hidden;animation:rise .7s ease .4s both}
+.stat{flex:1;padding:22px 24px;text-align:center;border-right:1px solid var(--border)}
+.stat:last-child{border-right:none}
+.stat-n{font-size:30px;font-weight:900;letter-spacing:-1px;background:linear-gradient(135deg,var(--p3),var(--b3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.stat-l{font-size:12px;color:var(--muted);margin-top:4px;font-weight:500}
 
-        .code-block {
-            background: #1a1a2e;
-            border-radius: 8px;
-            padding: 20px;
-            margin: 15px 0;
-            position: relative;
-        }
+@keyframes rise{from{opacity:0;transform:translateY(28px)}to{opacity:1;transform:translateY(0)}}
 
-        .code-block code {
-            color: #00ff88;
-            font-family: 'Fira Code', 'Consolas', monospace;
-            font-size: 14px;
-            display: block;
-            word-break: break-all;
-        }
+/* ══ SECTION ══ */
+.sec{padding:88px clamp(20px,6vw,80px)}
+.stag{display:inline-flex;align-items:center;gap:6px;padding:4px 13px;border-radius:6px;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.22);color:var(--p3);font-size:11.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;margin-bottom:14px}
+.stitle{font-size:clamp(26px,3.5vw,42px);font-weight:800;letter-spacing:-1px;margin-bottom:12px;line-height:1.2}
+.sdesc{color:var(--muted);font-size:16px;line-height:1.7;max-width:520px}
+.shead{margin-bottom:52px}.shead.c{text-align:center}.shead.c .sdesc{margin:0 auto}
+code.ic{background:rgba(139,92,246,.13);border:1px solid rgba(139,92,246,.22);color:var(--p3);padding:1px 7px;border-radius:4px;font-family:'Fira Code',Consolas,monospace;font-size:12.5px}
+.div{height:1px;background:linear-gradient(90deg,transparent,var(--border),transparent)}
+.fade{opacity:0;transform:translateY(28px);transition:opacity .65s ease,transform .65s ease}
+.fade.in{opacity:1;transform:translateY(0)}
 
-        .copy-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: #667eea;
-            color: #fff;
-            border: none;
-            padding: 8px 16px;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 12px;
-            transition: all 0.3s;
-        }
+/* ══ MARQUEE (model scroll) ══ */
+.marquee-wrap{overflow:hidden;padding:16px 0;position:relative}
+.marquee-wrap::before,.marquee-wrap::after{content:'';position:absolute;top:0;bottom:0;width:120px;z-index:2;pointer-events:none}
+.marquee-wrap::before{left:0;background:linear-gradient(90deg,var(--bg),transparent)}
+.marquee-wrap::after{right:0;background:linear-gradient(-90deg,var(--bg),transparent)}
+.marquee-track{display:flex;gap:10px;width:max-content;animation:scroll 40s linear infinite}
+.marquee-track:hover{animation-play-state:paused}
+.mchip{display:flex;align-items:center;gap:7px;padding:7px 16px;border-radius:999px;background:var(--card);border:1px solid var(--border);font-size:13px;color:var(--muted);white-space:nowrap;transition:all .2s;cursor:default}
+.mchip:hover{border-color:var(--border2);color:var(--text)}
+.mchip .mi{width:18px;height:18px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0}
+@keyframes scroll{from{transform:translateX(0)}to{transform:translateX(-50%)}}
 
-        .copy-btn:hover {
-            background: #764ba2;
-        }
+/* ══ PROVIDERS ══ */
+.providers-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+@media(max-width:900px){.providers-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:500px){.providers-grid{grid-template-columns:1fr}}
 
-        .copy-btn.copied {
-            background: #00ff88;
-        }
+.prov-card{padding:24px;border-radius:var(--r);background:var(--card);border:1px solid var(--border);transition:all .3s;position:relative;overflow:hidden}
+.prov-card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .3s}
+.prov-card:hover{border-color:var(--border2);transform:translateY(-4px);box-shadow:0 12px 36px rgba(139,92,246,.12)}
+.prov-card:hover::before{opacity:1}
 
-        .step-list {
-            list-style: none;
-            counter-reset: step;
-        }
+.prov-head{display:flex;align-items:center;gap:12px;margin-bottom:14px}
+.prov-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.prov-name{font-size:16px;font-weight:700}
+.prov-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.prov-models{display:flex;flex-direction:column;gap:7px;margin-top:4px}
+.pm{display:flex;align-items:center;justify-content:space-between}
+.pm-name{font-size:13px;font-family:'Fira Code',Consolas,monospace;color:var(--muted)}
+.pm-badge{font-size:11px;padding:1px 8px;border-radius:999px}
 
-        .step-list li {
-            counter-increment: step;
-            margin-bottom: 15px;
-            padding-left: 40px;
-            position: relative;
-        }
+/* provider color themes */
+.p-claude .prov-icon{background:rgba(205,133,63,.15);border:1px solid rgba(205,133,63,.25)}
+.p-claude::before{background:linear-gradient(135deg,rgba(205,133,63,.06),transparent 60%)}
+.p-claude .pm-badge{background:rgba(205,133,63,.12);color:#d4945a;border:1px solid rgba(205,133,63,.2)}
 
-        .step-list li::before {
-            content: counter(step);
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 28px;
-            height: 28px;
-            background: #667eea;
-            color: #fff;
-            border-radius: 50%;
-            text-align: center;
-            line-height: 28px;
-            font-weight: bold;
-            font-size: 14px;
-        }
+.p-openai .prov-icon{background:rgba(16,185,129,.12);border:1px solid rgba(16,185,129,.22)}
+.p-openai::before{background:linear-gradient(135deg,rgba(16,185,129,.06),transparent 60%)}
+.p-openai .pm-badge{background:rgba(16,185,129,.1);color:var(--green);border:1px solid rgba(16,185,129,.2)}
 
-        .model-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin: 20px 0;
-        }
+.p-google .prov-icon{background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.22)}
+.p-google::before{background:linear-gradient(135deg,rgba(59,130,246,.06),transparent 60%)}
+.p-google .pm-badge{background:rgba(59,130,246,.1);color:var(--b3);border:1px solid rgba(59,130,246,.2)}
 
-        .model-table th,
-        .model-table td {
-            padding: 12px 16px;
-            text-align: left;
-            border-bottom: 1px solid #eee;
-        }
+.p-meta .prov-icon{background:rgba(139,92,246,.12);border:1px solid rgba(139,92,246,.22)}
+.p-meta::before{background:linear-gradient(135deg,rgba(139,92,246,.06),transparent 60%)}
+.p-meta .pm-badge{background:rgba(139,92,246,.1);color:var(--p3);border:1px solid rgba(139,92,246,.2)}
 
-        .model-table th {
-            background: #f5f5f5;
-            font-weight: 600;
-        }
+/* more providers row */
+.more-provs{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:16px}
+@media(max-width:700px){.more-provs{grid-template-columns:repeat(2,1fr)}}
+.mp-card{padding:16px 20px;border-radius:12px;background:var(--card);border:1px solid var(--border);display:flex;align-items:center;gap:12px;transition:all .25s}
+.mp-card:hover{border-color:var(--border2);transform:translateY(-2px)}
+.mp-icon{font-size:22px;flex-shrink:0}
+.mp-info-name{font-size:14px;font-weight:700}
+.mp-info-sub{font-size:12px;color:var(--muted);margin-top:2px}
 
-        .model-table tr:hover {
-            background: #f9f9f9;
-        }
+.more-hint{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:24px;padding:16px;border-radius:12px;background:rgba(139,92,246,.06);border:1px dashed rgba(139,92,246,.25);color:var(--muted);font-size:14px}
+.more-hint strong{color:var(--p3);font-size:17px}
 
-        .tip-box {
-            background: #e8f5e9;
-            border-left: 4px solid #4caf50;
-            padding: 16px 20px;
-            margin: 20px 0;
-            border-radius: 4px;
-        }
+/* ══ WHY ══ */
+.why-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media(max-width:900px){.why-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:540px){.why-grid{grid-template-columns:1fr}}
+.wcard{padding:28px;border-radius:var(--r);background:var(--card);border:1px solid var(--border);transition:all .3s;position:relative;overflow:hidden}
+.wcard::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,rgba(139,92,246,.07),transparent 60%);opacity:0;transition:opacity .3s}
+.wcard:hover{border-color:var(--border2);transform:translateY(-4px);box-shadow:0 12px 36px rgba(139,92,246,.12)}
+.wcard:hover::before{opacity:1}
+.wico{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,rgba(139,92,246,.18),rgba(59,130,246,.18));border:1px solid rgba(139,92,246,.28);display:flex;align-items:center;justify-content:center;font-size:23px;margin-bottom:18px}
+.wcard h3{font-size:16px;font-weight:700;margin-bottom:9px}
+.wcard p{font-size:13.5px;color:var(--muted);line-height:1.75}
 
-        .tip-box.warning {
-            background: #fff3e0;
-            border-left-color: #ff9800;
-        }
+/* ══ QUICK START ══ */
+.qs-wrap{display:grid;grid-template-columns:320px 1fr;gap:28px;align-items:start}
+@media(max-width:860px){.qs-wrap{grid-template-columns:1fr}}
+.qs-tabs{display:flex;flex-direction:column;gap:10px}
+@media(max-width:860px){.qs-tabs{flex-direction:row;flex-wrap:wrap}}
+.qt{padding:18px 20px;border-radius:12px;background:var(--card);border:1.5px solid var(--border);cursor:pointer;text-align:left;transition:all .25s}
+.qt:hover{border-color:var(--border2)}
+.qt.on{background:linear-gradient(135deg,rgba(139,92,246,.13),rgba(59,130,246,.08));border-color:var(--p1);box-shadow:0 0 20px rgba(139,92,246,.12)}
+.qt-ico{font-size:20px;margin-bottom:7px}
+.qt-t{font-size:15px;font-weight:700;margin-bottom:3px}
+.qt-d{font-size:12.5px;color:var(--muted)}
+.qp{display:none;flex-direction:column;gap:18px}
+.qp.on{display:flex}
+.qs-steps{display:flex;flex-direction:column}
+.qstep{display:flex;gap:16px;padding:16px 0;border-bottom:1px solid var(--border)}
+.qstep:last-child{border-bottom:none}
+.sn{width:30px;height:30px;border-radius:50%;flex-shrink:0;background:linear-gradient(135deg,var(--p1),var(--b1));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#fff;box-shadow:0 0 10px rgba(139,92,246,.4);margin-top:2px}
+.qstep h4{font-size:15px;font-weight:700;margin-bottom:4px}
+.qstep p{font-size:13.5px;color:var(--muted);line-height:1.6}
+.qstep a{color:var(--p3)}.qstep a:hover{text-decoration:underline}
 
-        .footer {
-            background: #f5f5f5;
-            padding: 30px 40px;
-            text-align: center;
-            color: #666;
-        }
+/* code block */
+.cb{background:#060610;border-radius:12px;border:1px solid rgba(255,255,255,.07);overflow:hidden}
+.cb-h{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:rgba(255,255,255,.025);border-bottom:1px solid rgba(255,255,255,.06)}
+.cb-dots{display:flex;gap:6px}.cb-dots span{width:10px;height:10px;border-radius:50%}
+.cb-dots .r{background:#ff5f57}.cb-dots .y{background:#febc2e}.cb-dots .g{background:#28c840}
+.cb-lang{font-size:12px;color:var(--muted2);font-family:monospace}
+.cb-copy{padding:4px 12px;border-radius:5px;background:rgba(139,92,246,.13);border:1px solid rgba(139,92,246,.22);color:var(--p3);font-size:12px;cursor:pointer;font-family:inherit;transition:all .2s}
+.cb-copy:hover{background:rgba(139,92,246,.25)}
+.cb-copy.ok{background:rgba(16,185,129,.13);border-color:rgba(16,185,129,.22);color:var(--green)}
+.cb-body{padding:18px 20px;font-family:'Fira Code','Cascadia Code',Consolas,monospace;font-size:13px;line-height:1.9;color:#c9d1d9;overflow-x:auto;white-space:pre}
+.tk{color:#ff79c6}.ts{color:#f1fa8c}.tv{color:#bd93f9}.tf{color:#8be9fd}.tc{color:#6272a4}.tg{color:#50fa7b}.to{color:#ffb86c}
 
-        .footer a {
-            color: #667eea;
-            text-decoration: none;
-        }
+/* ══ CTA ══ */
+.cta-sec{background:var(--bg2);position:relative;overflow:hidden}
+.cta-orb{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(109,40,217,.16) 0%,transparent 70%);filter:blur(70px);pointer-events:none}
+.cta-inner{max-width:680px;margin:0 auto;text-align:center;position:relative;z-index:1}
+.cta-inner h2{font-size:clamp(28px,4vw,46px);font-weight:900;letter-spacing:-1.5px;margin-bottom:14px}
+.cta-inner p{font-size:17px;color:var(--muted);margin-bottom:36px;line-height:1.7}
+.cta-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.cta-links{margin-top:36px;display:flex;gap:20px;justify-content:center;flex-wrap:wrap}
+.cl{display:flex;align-items:center;gap:8px;padding:11px 20px;border-radius:10px;background:rgba(255,255,255,.03);border:1px solid var(--border);font-size:14px;color:var(--muted);transition:all .2s}
+.cl:hover{border-color:var(--border2);color:var(--text);background:rgba(139,92,246,.07)}
+.cl-ico{font-size:17px}
 
-        .footer a:hover {
-            text-decoration: underline;
-        }
+/* ══ FOOTER ══ */
+footer{background:var(--bg);border-top:1px solid var(--border);padding:52px clamp(20px,6vw,80px) 28px}
+.ft-grid{display:grid;grid-template-columns:2fr 1fr 1fr;gap:48px;margin-bottom:44px}
+@media(max-width:640px){.ft-grid{grid-template-columns:1fr;gap:28px}}
+.ft-brand p{font-size:14px;color:var(--muted);margin-top:12px;line-height:1.7;max-width:270px}
+.ft-col h5{font-size:11.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted2);margin-bottom:16px}
+.ft-col ul{list-style:none;display:flex;flex-direction:column;gap:10px}
+.ft-col a{font-size:14px;color:var(--muted);transition:color .2s}.ft-col a:hover{color:var(--text)}
+.ft-bot{border-top:1px solid var(--border);padding-top:24px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px}
+.ft-bot p{font-size:13px;color:var(--muted2)}.ft-bot a{color:var(--p3)}
 
-        .platform-tabs {
-            display: flex;
-            margin-bottom: 20px;
-            gap: 10px;
-        }
-
-        .platform-tab {
-            padding: 10px 20px;
-            border: 2px solid #667eea;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.3s;
-            font-weight: 500;
-        }
-
-        .platform-tab.active {
-            background: #667eea;
-            color: #fff;
-        }
-
-        .platform-tab:not(.active) {
-            background: #fff;
-            color: #667eea;
-        }
-
-        .platform-content {
-            display: none;
-        }
-
-        .platform-content.active {
-            display: block;
-        }
-    </style>
+/* ══ MOBILE ══ */
+@media(max-width:760px){
+  .nav-links{display:none;flex-direction:column;position:fixed;top:66px;left:0;right:0;background:rgba(5,5,15,.97);border-bottom:1px solid var(--border);padding:14px clamp(20px,5vw,40px) 24px;gap:4px}
+  .nav-links.open{display:flex}
+  .nav-links li{width:100%}.nav-links a{display:block;padding:11px 14px}
+  .hbg{display:flex}
+  .h-stats{flex-wrap:wrap}.stat{min-width:110px;flex:none;padding:18px 16px}
+}
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>🚀 Claude Code 一键安装指南</h1>
-            <p>硅基API · 无需 Anthropic 账号 · 快速上手</p>
-        </div>
 
-        <div class="content">
-            <!-- 安装命令 -->
-            <div class="section">
-                <h2>一、一键安装命令</h2>
+<!-- NAV -->
+<nav class="nav" id="nav">
+  <a href="https://guijiapi.net" class="logo">
+    <div class="logo-mark">硅</div>
+    <span class="logo-name">硅基<em>API</em></span>
+  </a>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="https://guijiapi.net">首页</a></li>
+    <li><a href="#models">支持模型</a></li>
+    <li><a href="https://claude.guijiapi.net">Claude Code</a></li>
+    <li><a href="https://api.guijiapi.net" target="_blank" class="nav-cta">获取 API Key →</a></li>
+  </ul>
+  <button class="hbg" id="hbg" aria-label="菜单"><span></span><span></span><span></span></button>
+</nav>
 
-                <div class="platform-tabs">
-                    <div class="platform-tab active" onclick="switchPlatform('linux')">Linux / MacOS</div>
-                    <div class="platform-tab" onclick="switchPlatform('windows')">Windows</div>
-                </div>
 
-                <div id="linux-content" class="platform-content active">
-                    <div class="code-block">
-                        <button class="copy-btn" onclick="copyCode('linux-code')">复制</button>
-                        <code id="linux-code">curl -fsSL https://raw.githubusercontent.com/SamAISEO/GuijiAPI/main/install.sh | bash</code>
-                    </div>
-                </div>
+<!-- HERO -->
+<section class="hero">
+  <div class="h-bg"></div>
+  <div class="h-grid"></div>
+  <div class="h-orb1"></div>
+  <div class="h-orb2"></div>
+  <div class="h-inner">
+    <div class="h-pill"><span class="dot"></span>服务稳定运行中 · 持续同步最新模型</div>
+    <h1 class="h-title">
+      <span class="t1">500+ 大模型</span>
+      <span class="tg">一个 API Key 全搞定</span>
+    </h1>
+    <p class="h-sub">
+      硅基API 聚合 <strong>Claude、GPT、Gemini、Llama</strong> 等全球主流大模型，<br>
+      国内直连，完全兼容 OpenAI / Anthropic SDK，开箱即用。
+    </p>
+    <div class="h-btns">
+      <a href="https://api.guijiapi.net" target="_blank" class="btn-glow">
+        免费获取 API Key
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M3 8h10M9 4l4 4-4 4" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      <a href="https://claude.guijiapi.net" class="btn-ghost">
+        Claude Code 安装指南
+        <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2.5 7.5h10M9 3.5l4 4-4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+    </div>
+    <div class="h-stats">
+      <div class="stat"><div class="stat-n">500+</div><div class="stat-l">支持模型</div></div>
+      <div class="stat"><div class="stat-n">20+</div><div class="stat-l">模型厂商</div></div>
+      <div class="stat"><div class="stat-n">100%</div><div class="stat-l">SDK 兼容</div></div>
+      <div class="stat"><div class="stat-n">国内</div><div class="stat-l">直连访问</div></div>
+    </div>
+  </div>
+</section>
 
-                <div id="windows-content" class="platform-content">
-                    <div class="code-block">
-                        <button class="copy-btn" onclick="copyCode('windows-code')">复制</button>
-                        <code id="windows-code">irm https://raw.githubusercontent.com/SamAISEO/GuijiAPI/main/install.ps1 | iex</code>
-                    </div>
-                </div>
+<div class="div"></div>
 
-                <p style="margin-top: 15px; color: #666;">
-                    复制上面的脚本命令到命令行窗口，按回车键运行。
-                </p>
-            </div>
 
-            <!-- 安装步骤 -->
-            <div class="section">
-                <h2>二、安装步骤说明</h2>
+<!-- MODELS -->
+<section class="sec" id="models" style="background:var(--bg2)">
+  <div class="shead c fade">
+    <div class="stag">支持模型</div>
+    <h2 class="stitle">覆盖全球主流大模型</h2>
+    <p class="sdesc">Claude、GPT、Gemini、Llama、Mistral……500+ 模型，统一 API 入口，一个 Key 全部搞定</p>
+  </div>
 
-                <ul class="step-list">
-                    <li>
-                        <strong>获取 API Key</strong><br>
-                        访问 <a href="https://api.guijiapi.net" target="_blank">硅基API官网</a> 注册并获取 API Key
-                    </li>
-                    <li>
-                        <strong>运行安装脚本</strong><br>
-                        在终端中粘贴并运行上面的安装命令
-                    </li>
-                    <li>
-                        <strong>输入 API Key</strong><br>
-                        根据提示输入 API Key（输入时不显示）
-                    </li>
-                    <li>
-                        <strong>选择模型</strong><br>
-                        选择默认使用的 Claude 模型
-                    </li>
-                </ul>
-            </div>
+  <!-- 滚动展示条 -->
+  <div class="marquee-wrap fade" style="margin-bottom:48px">
+    <div class="marquee-track" id="mtrack"></div>
+  </div>
 
-            <!-- 使用方法 -->
-            <div class="section">
-                <h2>三、开始使用</h2>
+  <!-- 主流厂商卡片 -->
+  <div class="providers-grid fade">
 
-                <div class="tip-box">
-                    安装完成后，关闭当前终端，重新打开一个新终端。
-                </div>
-
-                <div class="code-block">
-                    <button class="copy-btn" onclick="copyCode('claude-cmd')">复制</button>
-                    <code id="claude-cmd">claude</code>
-                </div>
-
-                <p style="margin-top: 15px;">
-                    输入 <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 4px;">claude</code> 命令启动 Claude Code。
-                </p>
-
-                <div class="tip-box warning">
-                    <strong>首次启动提示：</strong><br>
-                    选择 "1. Yes, I trust this folder" 确认使用配置的 API Key。
-                </div>
-            </div>
-
-            <!-- 支持模型 -->
-            <div class="section">
-                <h2>四、支持的模型</h2>
-
-                <table class="model-table">
-                    <thead>
-                        <tr>
-                            <th>模型名称</th>
-                            <th>特点</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>claude-sonnet-4-6</td>
-                            <td>推荐 · 速度快</td>
-                        </tr>
-                        <tr>
-                            <td>claude-opus-4-7</td>
-                            <td>最新最强 · 较慢</td>
-                        </tr>
-                        <tr>
-                            <td>claude-opus-4-6</td>
-                            <td>旗舰级</td>
-                        </tr>
-                        <tr>
-                            <td>claude-sonnet-4-5-20250929</td>
-                            <td>稳定版本</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div class="footer">
-            <p>
-                <strong>硅基API</strong> - 高质量AI接口服务 · 安全稳定 · 低延迟 · 高并发
-            </p>
-            <p style="margin-top: 10px;">
-                <a href="https://api.guijiapi.net" target="_blank">官网：api.guijiapi.net</a>
-            </p>
-        </div>
+    <div class="prov-card p-claude">
+      <div class="prov-head">
+        <div class="prov-icon">🤖</div>
+        <div><div class="prov-name">Anthropic Claude</div><div class="prov-sub">最强推理与代码能力</div></div>
+      </div>
+      <div class="prov-models">
+        <div class="pm"><span class="pm-name">claude-opus-4-7</span><span class="pm-badge">最新最强</span></div>
+        <div class="pm"><span class="pm-name">claude-sonnet-4-6</span><span class="pm-badge">推荐</span></div>
+        <div class="pm"><span class="pm-name">claude-opus-4-6</span><span class="pm-badge">旗舰</span></div>
+        <div class="pm"><span class="pm-name">claude-haiku-4-5</span><span class="pm-badge">轻量</span></div>
+      </div>
     </div>
 
-    <script>
-        function switchPlatform(platform) {
-            // 切换 tab 状态
-            document.querySelectorAll('.platform-tab').forEach(tab => {
-                tab.classList.remove('active');
-            });
-            event.target.classList.add('active');
+    <div class="prov-card p-openai">
+      <div class="prov-head">
+        <div class="prov-icon">✦</div>
+        <div><div class="prov-name">OpenAI GPT</div><div class="prov-sub">全球使用最广泛</div></div>
+      </div>
+      <div class="prov-models">
+        <div class="pm"><span class="pm-name">gpt-4o</span><span class="pm-badge">多模态</span></div>
+        <div class="pm"><span class="pm-name">gpt-4-turbo</span><span class="pm-badge">强力</span></div>
+        <div class="pm"><span class="pm-name">gpt-4o-mini</span><span class="pm-badge">轻量</span></div>
+        <div class="pm"><span class="pm-name">o1 / o3-mini</span><span class="pm-badge">推理</span></div>
+      </div>
+    </div>
 
-            // 切换内容
-            document.querySelectorAll('.platform-content').forEach(content => {
-                content.classList.remove('active');
-            });
-            document.getElementById(platform + '-content').classList.add('active');
-        }
+    <div class="prov-card p-google">
+      <div class="prov-head">
+        <div class="prov-icon">💠</div>
+        <div><div class="prov-name">Google Gemini</div><div class="prov-sub">超长上下文窗口</div></div>
+      </div>
+      <div class="prov-models">
+        <div class="pm"><span class="pm-name">gemini-2.5-pro</span><span class="pm-badge">最新</span></div>
+        <div class="pm"><span class="pm-name">gemini-2.0-flash</span><span class="pm-badge">极速</span></div>
+        <div class="pm"><span class="pm-name">gemini-1.5-pro</span><span class="pm-badge">长文本</span></div>
+        <div class="pm"><span class="pm-name">gemini-1.5-flash</span><span class="pm-badge">高效</span></div>
+      </div>
+    </div>
 
-        function copyCode(id) {
-            const code = document.getElementById(id).innerText;
-            navigator.clipboard.writeText(code).then(() => {
-                const btn = event.target;
-                btn.innerText = '已复制';
-                btn.classList.add('copied');
-                setTimeout(() => {
-                    btn.innerText = '复制';
-                    btn.classList.remove('copied');
-                }, 2000);
-            });
-        }
-    </script>
+    <div class="prov-card p-meta">
+      <div class="prov-head">
+        <div class="prov-icon">🦙</div>
+        <div><div class="prov-name">Meta Llama</div><div class="prov-sub">顶级开源模型</div></div>
+      </div>
+      <div class="prov-models">
+        <div class="pm"><span class="pm-name">llama-3.3-70b</span><span class="pm-badge">开源强</span></div>
+        <div class="pm"><span class="pm-name">llama-3.1-405b</span><span class="pm-badge">超大</span></div>
+        <div class="pm"><span class="pm-name">llama-3.2-vision</span><span class="pm-badge">视觉</span></div>
+        <div class="pm"><span class="pm-name">llama-3.1-8b</span><span class="pm-badge">轻量</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 更多厂商 -->
+  <div class="more-provs fade" style="margin-top:16px">
+    <div class="mp-card"><span class="mp-icon">🌊</span><div><div class="mp-info-name">Mistral AI</div><div class="mp-info-sub">mistral-large · mixtral</div></div></div>
+    <div class="mp-card"><span class="mp-icon">🔷</span><div><div class="mp-info-name">DeepSeek</div><div class="mp-info-sub">deepseek-r1 · v3 · coder</div></div></div>
+    <div class="mp-card"><span class="mp-icon">🟤</span><div><div class="mp-info-name">Qwen 通义千问</div><div class="mp-info-sub">qwen-turbo · plus · max</div></div></div>
+    <div class="mp-card"><span class="mp-icon">🌸</span><div><div class="mp-info-name">GLM 智谱</div><div class="mp-info-sub">glm-4 · glm-4v · z1</div></div></div>
+    <div class="mp-card"><span class="mp-icon">🔴</span><div><div class="mp-info-name">xAI Grok</div><div class="mp-info-sub">grok-3 · grok-2</div></div></div>
+    <div class="mp-card"><span class="mp-icon">⚡</span><div><div class="mp-info-name">Groq</div><div class="mp-info-sub">极速推理加速</div></div></div>
+    <div class="mp-card"><span class="mp-icon">🌀</span><div><div class="mp-info-name">Cohere</div><div class="mp-info-sub">command-r-plus</div></div></div>
+    <div class="mp-card"><span class="mp-icon">🏔️</span><div><div class="mp-info-name">更多厂商</div><div class="mp-info-sub">持续接入中…</div></div></div>
+  </div>
+
+  <div class="more-hint fade">
+    <strong>500+</strong>
+    个模型持续接入，访问
+    <a href="https://api.guijiapi.net" target="_blank" style="color:var(--p3);margin:0 4px">api.guijiapi.net</a>
+    查看完整模型列表
+  </div>
+</section>
+
+<div class="div"></div>
+
+
+<!-- WHY -->
+<section class="sec" style="background:var(--bg)">
+  <div class="shead c fade">
+    <div class="stag">核心优势</div>
+    <h2 class="stitle">为什么选择硅基API</h2>
+    <p class="sdesc">一个平台，接入全球最优质的 AI 模型，极速上手，稳定可靠</p>
+  </div>
+  <div class="why-grid">
+    <div class="wcard fade"><div class="wico">🌐</div><h3>国内直连，无需代理</h3><p>服务节点国内直达，稳定低延迟，无需 VPN，随时随地畅快使用所有模型。</p></div>
+    <div class="wcard fade"><div class="wico">🔌</div><h3>兼容主流 SDK</h3><p>完全兼容 OpenAI 和 Anthropic 官方 SDK，只需修改 <code class="ic">base_url</code>，现有代码零改动。</p></div>
+    <div class="wcard fade"><div class="wico">⚡</div><h3>模型持续更新</h3><p>全球厂商发布新模型后第一时间上线，始终为你提供最新、最强的模型选择。</p></div>
+    <div class="wcard fade"><div class="wico">🔑</div><h3>统一 API Key</h3><p>一个 Key 访问 500+ 模型，无需为不同厂商分别申请账号，大幅降低接入成本。</p></div>
+    <div class="wcard fade"><div class="wico">🛠️</div><h3>一键安装 Claude Code</h3><p>提供 Windows / macOS / Linux 一键脚本，自动完成全部配置，5 分钟跑通 Claude Code。</p></div>
+    <div class="wcard fade"><div class="wico">🔒</div><h3>安全透明</h3><p>安装脚本完全开源可审计，API Key 由你持有，全程 HTTPS 加密，数据安全无忧。</p></div>
+  </div>
+</section>
+
+<div class="div"></div>
+
+
+<!-- QUICK START -->
+<section class="sec" style="background:var(--bg2)">
+  <div class="shead fade">
+    <div class="stag">快速上手</div>
+    <h2 class="stitle">选择你的接入方式</h2>
+    <p class="sdesc">两种方式均可在 5 分钟内完成配置，开始使用</p>
+  </div>
+  <div class="qs-wrap">
+    <div class="qs-tabs fade">
+      <div class="qt on" onclick="qsSwitch('cc',this)">
+        <div class="qt-ico">🚀</div>
+        <div class="qt-t">Claude Code 一键安装</div>
+        <div class="qt-d">适合所有用户 · 自动完成全部配置</div>
+      </div>
+      <div class="qt" onclick="qsSwitch('api',this)">
+        <div class="qt-ico">⚙️</div>
+        <div class="qt-t">API 直接调用</div>
+        <div class="qt-d">适合开发者 · 兼容 OpenAI / Anthropic SDK</div>
+      </div>
+    </div>
+    <div style="min-width:0">
+
+      <!-- Claude Code -->
+      <div class="qp on fade" id="pane-cc">
+        <div class="qs-steps">
+          <div class="qstep"><div class="sn">1</div><div><h4>获取 API Key</h4><p>访问 <a href="https://api.guijiapi.net" target="_blank">api.guijiapi.net</a> 注册账号并复制你的 API Key</p></div></div>
+          <div class="qstep"><div class="sn">2</div><div><h4>运行一键安装脚本</h4><p>根据你的系统选择下方命令，粘贴到终端回车执行</p></div></div>
+          <div class="qstep"><div class="sn">3</div><div><h4>输入 API Key 并选择模型</h4><p>脚本自动完成环境检测、npm 安装、变量写入全流程</p></div></div>
+          <div class="qstep"><div class="sn">4</div><div><h4>重启终端，输入 <code class="ic">claude</code> 启动</h4><p>首次启动选择信任当前目录即可开始使用</p></div></div>
+        </div>
+        <a href="https://claude.guijiapi.net" class="btn-glow" style="font-size:14px;padding:11px 24px;width:fit-content">查看完整安装指南 →</a>
+        <div class="cb">
+          <div class="cb-h"><div class="cb-dots"><span class="r"></span><span class="y"></span><span class="g"></span></div><span class="cb-lang">Linux / macOS</span><button class="cb-copy" onclick="doCopy(this,'t1')">复制</button></div>
+          <div class="cb-body" id="t1">curl -fsSL https://raw.githubusercontent.com/SamAISEO/GuijiAPI/main/install.sh | bash</div>
+        </div>
+        <div class="cb">
+          <div class="cb-h"><div class="cb-dots"><span class="r"></span><span class="y"></span><span class="g"></span></div><span class="cb-lang">Windows PowerShell</span><button class="cb-copy" onclick="doCopy(this,'t2')">复制</button></div>
+          <div class="cb-body" id="t2">irm https://raw.githubusercontent.com/SamAISEO/GuijiAPI/main/install.ps1 | iex</div>
+        </div>
+      </div>
+
+      <!-- API -->
+      <div class="qp fade" id="pane-api">
+        <div class="qs-steps">
+          <div class="qstep"><div class="sn">1</div><div><h4>获取 API Key</h4><p>访问 <a href="https://api.guijiapi.net" target="_blank">api.guijiapi.net</a> 注册并获取 API Key</p></div></div>
+          <div class="qstep"><div class="sn">2</div><div><h4>设置 base_url 为硅基API 地址</h4><p>将 <code class="ic">base_url</code> 改为 <code class="ic">https://api.guijiapi.net/v1</code>，其余代码无需改动</p></div></div>
+          <div class="qstep"><div class="sn">3</div><div><h4>按模型名称调用任意模型</h4><p>OpenAI / Anthropic SDK 均可，访问 <a href="https://api.guijiapi.net" target="_blank">控制台</a> 查看完整模型列表</p></div></div>
+        </div>
+        <div class="cb">
+          <div class="cb-h"><div class="cb-dots"><span class="r"></span><span class="y"></span><span class="g"></span></div><span class="cb-lang">Python · OpenAI SDK</span><button class="cb-copy" onclick="doCopy(this,'t3')">复制</button></div>
+          <div class="cb-body" id="t3"><span class="tk">from</span> openai <span class="tk">import</span> OpenAI
+
+client = <span class="tf">OpenAI</span>(
+    api_key=<span class="ts">"YOUR_GUIJIAPI_KEY"</span>,
+    base_url=<span class="ts">"https://api.guijiapi.net/v1"</span>,
+)
+
+<span class="tc"># 任意模型，改 model 名即可切换</span>
+resp = client.chat.completions.<span class="tf">create</span>(
+    model=<span class="ts">"claude-sonnet-4-6"</span>,  <span class="tc"># 或 gpt-4o / gemini-2.5-pro …</span>
+    messages=[{<span class="ts">"role"</span>: <span class="ts">"user"</span>, <span class="ts">"content"</span>: <span class="ts">"你好！"</span>}],
+)
+<span class="tf">print</span>(resp.choices[<span class="tv">0</span>].message.content)</div>
+        </div>
+        <div class="cb">
+          <div class="cb-h"><div class="cb-dots"><span class="r"></span><span class="y"></span><span class="g"></span></div><span class="cb-lang">Python · Anthropic SDK</span><button class="cb-copy" onclick="doCopy(this,'t4')">复制</button></div>
+          <div class="cb-body" id="t4"><span class="tk">import</span> anthropic
+
+client = anthropic.<span class="tf">Anthropic</span>(
+    api_key=<span class="ts">"YOUR_GUIJIAPI_KEY"</span>,
+    base_url=<span class="ts">"https://api.guijiapi.net"</span>,
+)
+
+msg = client.messages.<span class="tf">create</span>(
+    model=<span class="ts">"claude-sonnet-4-6"</span>,
+    max_tokens=<span class="tv">1024</span>,
+    messages=[{<span class="ts">"role"</span>: <span class="ts">"user"</span>, <span class="ts">"content"</span>: <span class="ts">"你好！"</span>}],
+)
+<span class="tf">print</span>(msg.content[<span class="tv">0</span>].text)</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<div class="div"></div>
+
+
+<!-- CTA -->
+<section class="sec cta-sec">
+  <div class="cta-orb"></div>
+  <div class="cta-inner fade">
+    <div class="stag" style="margin:0 auto 18px">立即开始</div>
+    <h2>一个 Key，解锁 500+ 大模型</h2>
+    <p>免费注册，5 分钟内完成接入，立即开始使用全球最强 AI 模型</p>
+    <div class="cta-btns">
+      <a href="https://api.guijiapi.net" target="_blank" class="btn-glow">免费获取 API Key →</a>
+      <a href="https://claude.guijiapi.net" class="btn-ghost">Claude Code 安装指南</a>
+    </div>
+    <div class="cta-links">
+      <a href="https://api.guijiapi.net" target="_blank" class="cl"><span class="cl-ico">🔑</span>api.guijiapi.net</a>
+      <a href="https://claude.guijiapi.net" class="cl"><span class="cl-ico">📖</span>claude.guijiapi.net</a>
+      <a href="https://guijiapi.net" class="cl"><span class="cl-ico">🌐</span>guijiapi.net</a>
+    </div>
+  </div>
+</section>
+
+
+<!-- FOOTER -->
+<footer>
+  <div class="ft-grid">
+    <div class="ft-brand">
+      <a href="https://guijiapi.net" class="logo">
+        <div class="logo-mark">硅</div>
+        <span class="logo-name">硅基<em>API</em></span>
+      </a>
+      <p>500+ 大模型统一接入，国内直连，兼容主流 SDK，帮助开发者和 AI 用户专注于创造本身。</p>
+    </div>
+    <div class="ft-col">
+      <h5>产品</h5>
+      <ul>
+        <li><a href="https://api.guijiapi.net" target="_blank">API 控制台</a></li>
+        <li><a href="#models">支持模型</a></li>
+        <li><a href="https://claude.guijiapi.net">Claude Code 指南</a></li>
+      </ul>
+    </div>
+    <div class="ft-col">
+      <h5>资源</h5>
+      <ul>
+        <li><a href="https://claude.guijiapi.net">快速开始</a></li>
+        <li><a href="https://api.guijiapi.net" target="_blank">获取 API Key</a></li>
+        <li><a href="https://guijiapi.net">回到首页</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="ft-bot">
+    <p>© 2026 硅基API · <a href="https://api.guijiapi.net">api.guijiapi.net</a></p>
+    <p>非 Anthropic / OpenAI 官方服务 · 第三方 API 聚合平台</p>
+  </div>
+</footer>
+
+
+<script>
+// ── Nav scroll
+window.addEventListener('scroll',()=>document.getElementById('nav').classList.toggle('sc',scrollY>20))
+
+// ── Hamburger
+const hbg=document.getElementById('hbg'),nl=document.getElementById('navLinks')
+hbg.addEventListener('click',()=>{
+  nl.classList.toggle('open')
+  const o=nl.classList.contains('open')
+  hbg.children[0].style.transform=o?'rotate(45deg) translate(5px,5px)':''
+  hbg.children[1].style.opacity=o?'0':'1'
+  hbg.children[2].style.transform=o?'rotate(-45deg) translate(5px,-5px)':''
+})
+
+// ── Quick start tabs
+function qsSwitch(k,el){
+  document.querySelectorAll('.qt').forEach(t=>t.classList.remove('on'))
+  el.classList.add('on')
+  document.querySelectorAll('.qp').forEach(p=>p.classList.remove('on'))
+  document.getElementById('pane-'+k).classList.add('on')
+}
+
+// ── Copy
+function doCopy(btn,id){
+  navigator.clipboard.writeText(document.getElementById(id).innerText).then(()=>{
+    btn.textContent='已复制 ✓';btn.classList.add('ok')
+    setTimeout(()=>{btn.textContent='复制';btn.classList.remove('ok')},2000)
+  })
+}
+
+// ── Fade in
+const io=new IntersectionObserver(e=>e.forEach(x=>{if(x.isIntersecting){x.target.classList.add('in');io.unobserve(x.target)}}),{threshold:.1})
+document.querySelectorAll('.fade').forEach(el=>io.observe(el))
+
+// ── Marquee – generate chips
+const models=[
+  {n:'claude-opus-4-7',c:'#d4945a'},{n:'claude-sonnet-4-6',c:'#d4945a'},{n:'gpt-4o',c:'#10b981'},
+  {n:'gpt-4-turbo',c:'#10b981'},{n:'gemini-2.5-pro',c:'#60a5fa'},{n:'gemini-2.0-flash',c:'#60a5fa'},
+  {n:'llama-3.3-70b',c:'#a78bfa'},{n:'deepseek-r1',c:'#f59e0b'},{n:'mistral-large',c:'#06b6d4'},
+  {n:'grok-3',c:'#e879f9'},{n:'qwen-max',c:'#34d399'},{n:'glm-4',c:'#fb923c'},
+  {n:'o3-mini',c:'#10b981'},{n:'llama-3.1-405b',c:'#a78bfa'},{n:'claude-haiku-4-5',c:'#d4945a'},
+  {n:'gemini-1.5-pro',c:'#60a5fa'},{n:'mixtral-8x22b',c:'#06b6d4'},{n:'command-r-plus',c:'#f472b6'},
+  {n:'gpt-4o-mini',c:'#10b981'},{n:'deepseek-v3',c:'#f59e0b'},{n:'claude-opus-4-6',c:'#d4945a'},
+  {n:'llama-3.2-vision',c:'#a78bfa'},{n:'gemini-flash-1.5',c:'#60a5fa'},{n:'grok-2',c:'#e879f9'},
+]
+const track=document.getElementById('mtrack')
+const all=[...models,...models] // double for seamless loop
+all.forEach(m=>{
+  const chip=document.createElement('div')
+  chip.className='mchip'
+  chip.innerHTML=`<span class="mi" style="background:${m.c}22;color:${m.c};border:1px solid ${m.c}44">${m.n.slice(0,1).toUpperCase()}</span>${m.n}`
+  track.appendChild(chip)
+})
+</script>
 </body>
 </html>

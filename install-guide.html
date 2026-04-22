@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code 安装指南 - 硅基API</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            padding: 40px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #a0a0a0;
+            font-size: 14px;
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section h2 {
+            font-size: 20px;
+            color: #1a1a2e;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+        }
+
+        .code-block {
+            background: #1a1a2e;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+            position: relative;
+        }
+
+        .code-block code {
+            color: #00ff88;
+            font-family: 'Fira Code', 'Consolas', monospace;
+            font-size: 14px;
+            display: block;
+            word-break: break-all;
+        }
+
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #667eea;
+            color: #fff;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            transition: all 0.3s;
+        }
+
+        .copy-btn:hover {
+            background: #764ba2;
+        }
+
+        .copy-btn.copied {
+            background: #00ff88;
+        }
+
+        .step-list {
+            list-style: none;
+            counter-reset: step;
+        }
+
+        .step-list li {
+            counter-increment: step;
+            margin-bottom: 15px;
+            padding-left: 40px;
+            position: relative;
+        }
+
+        .step-list li::before {
+            content: counter(step);
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 28px;
+            height: 28px;
+            background: #667eea;
+            color: #fff;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+        .model-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        .model-table th,
+        .model-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        .model-table th {
+            background: #f5f5f5;
+            font-weight: 600;
+        }
+
+        .model-table tr:hover {
+            background: #f9f9f9;
+        }
+
+        .tip-box {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 16px 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .tip-box.warning {
+            background: #fff3e0;
+            border-left-color: #ff9800;
+        }
+
+        .footer {
+            background: #f5f5f5;
+            padding: 30px 40px;
+            text-align: center;
+            color: #666;
+        }
+
+        .footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        .platform-tabs {
+            display: flex;
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+
+        .platform-tab {
+            padding: 10px 20px;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .platform-tab.active {
+            background: #667eea;
+            color: #fff;
+        }
+
+        .platform-tab:not(.active) {
+            background: #fff;
+            color: #667eea;
+        }
+
+        .platform-content {
+            display: none;
+        }
+
+        .platform-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 Claude Code 一键安装指南</h1>
+            <p>硅基API · 无需 Anthropic 账号 · 快速上手</p>
+        </div>
+
+        <div class="content">
+            <!-- 安装命令 -->
+            <div class="section">
+                <h2>一、一键安装命令</h2>
+
+                <div class="platform-tabs">
+                    <div class="platform-tab active" onclick="switchPlatform('linux')">Linux / MacOS</div>
+                    <div class="platform-tab" onclick="switchPlatform('windows')">Windows</div>
+                </div>
+
+                <div id="linux-content" class="platform-content active">
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyCode('linux-code')">复制</button>
+                        <code id="linux-code">curl -fsSL https://raw.githubusercontent.com/SamAISEO/GuijiAPI/main/install.sh | bash</code>
+                    </div>
+                </div>
+
+                <div id="windows-content" class="platform-content">
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyCode('windows-code')">复制</button>
+                        <code id="windows-code">irm https://raw.githubusercontent.com/SamAISEO/GuijiAPI/main/install.ps1 | iex</code>
+                    </div>
+                </div>
+
+                <p style="margin-top: 15px; color: #666;">
+                    复制上面的脚本命令到命令行窗口，按回车键运行。
+                </p>
+            </div>
+
+            <!-- 安装步骤 -->
+            <div class="section">
+                <h2>二、安装步骤说明</h2>
+
+                <ul class="step-list">
+                    <li>
+                        <strong>获取 API Key</strong><br>
+                        访问 <a href="https://api.guijiapi.net" target="_blank">硅基API官网</a> 注册并获取 API Key
+                    </li>
+                    <li>
+                        <strong>运行安装脚本</strong><br>
+                        在终端中粘贴并运行上面的安装命令
+                    </li>
+                    <li>
+                        <strong>输入 API Key</strong><br>
+                        根据提示输入 API Key（输入时不显示）
+                    </li>
+                    <li>
+                        <strong>选择模型</strong><br>
+                        选择默认使用的 Claude 模型
+                    </li>
+                </ul>
+            </div>
+
+            <!-- 使用方法 -->
+            <div class="section">
+                <h2>三、开始使用</h2>
+
+                <div class="tip-box">
+                    安装完成后，关闭当前终端，重新打开一个新终端。
+                </div>
+
+                <div class="code-block">
+                    <button class="copy-btn" onclick="copyCode('claude-cmd')">复制</button>
+                    <code id="claude-cmd">claude</code>
+                </div>
+
+                <p style="margin-top: 15px;">
+                    输入 <code style="background: #f5f5f5; padding: 2px 6px; border-radius: 4px;">claude</code> 命令启动 Claude Code。
+                </p>
+
+                <div class="tip-box warning">
+                    <strong>首次启动提示：</strong><br>
+                    选择 "1. Yes, I trust this folder" 确认使用配置的 API Key。
+                </div>
+            </div>
+
+            <!-- 支持模型 -->
+            <div class="section">
+                <h2>四、支持的模型</h2>
+
+                <table class="model-table">
+                    <thead>
+                        <tr>
+                            <th>模型名称</th>
+                            <th>特点</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>claude-sonnet-4-6</td>
+                            <td>推荐 · 速度快</td>
+                        </tr>
+                        <tr>
+                            <td>claude-opus-4-7</td>
+                            <td>最新最强 · 较慢</td>
+                        </tr>
+                        <tr>
+                            <td>claude-opus-4-6</td>
+                            <td>旗舰级</td>
+                        </tr>
+                        <tr>
+                            <td>claude-sonnet-4-5-20250929</td>
+                            <td>稳定版本</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>
+                <strong>硅基API</strong> - 高质量AI接口服务 · 安全稳定 · 低延迟 · 高并发
+            </p>
+            <p style="margin-top: 10px;">
+                <a href="https://api.guijiapi.net" target="_blank">官网：api.guijiapi.net</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function switchPlatform(platform) {
+            // 切换 tab 状态
+            document.querySelectorAll('.platform-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // 切换内容
+            document.querySelectorAll('.platform-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(platform + '-content').classList.add('active');
+        }
+
+        function copyCode(id) {
+            const code = document.getElementById(id).innerText;
+            navigator.clipboard.writeText(code).then(() => {
+                const btn = event.target;
+                btn.innerText = '已复制';
+                btn.classList.add('copied');
+                setTimeout(() => {
+                    btn.innerText = '复制';
+                    btn.classList.remove('copied');
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
