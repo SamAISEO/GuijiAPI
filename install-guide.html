@@ -34,6 +34,33 @@
             text-align: center;
         }
 
+        .header-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .header-logo img {
+            width: 36px;
+            height: 36px;
+            object-fit: contain;
+            display: block;
+            filter: invert(1);
+            border-radius: 6px;
+        }
+
+        .header-logo span {
+            font-size: 18px;
+            font-weight: 700;
+        }
+
+        .header-logo em {
+            font-style: normal;
+            color: #a78bfa;
+        }
+
         .header h1 {
             font-size: 28px;
             margin-bottom: 10px;
@@ -214,6 +241,10 @@
 <body>
     <div class="container">
         <div class="header">
+            <div class="header-logo">
+                <img src="logo.jpg" alt="硅基API">
+                <span>硅基<em>API</em></span>
+            </div>
             <h1>🚀 Claude Code 一键安装指南</h1>
             <p>硅基API · 无需 Anthropic 账号 · 快速上手</p>
         </div>
