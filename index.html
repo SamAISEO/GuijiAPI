@@ -379,24 +379,26 @@ a { color: inherit; text-decoration: none; }
 .logo-track {
   display: flex;
   gap: 24px;
-  animation: marquee-scroll 30s linear infinite;
+  will-change: transform;
 }
 
-.logo-track:hover {
+.logo-track.js-marquee {
+  /* JS controlled animation */
+}
+
+.logo-marquee:hover .logo-track {
   animation-play-state: paused;
-}
-
-@keyframes marquee-scroll {
-  0% { transform: translateX(0); }
-  100% { transform: translateX(-50%); }
 }
 
 .logo-item {
   flex-shrink: 0;
+  width: 120px;
 }
 
 .logo-box {
-  padding: 16px 32px;
+  padding: 16px 0;
+  width: 100%;
+  text-align: center;
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -443,36 +445,37 @@ a { color: inherit; text-decoration: none; }
 }
 
 .case-studies-scroll {
+  overflow: hidden;
+  position: relative;
+  padding: 8px 0;
+}
+
+.case-studies-scroll::before,
+.case-studies-scroll::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 60px;
+  pointer-events: none;
+  z-index: 10;
+}
+
+.case-studies-scroll::before {
+  left: 0;
+  background: linear-gradient(90deg, var(--bg) 0%, transparent 100%);
+}
+
+.case-studies-scroll::after {
+  right: 0;
+  background: linear-gradient(-90deg, var(--bg) 0%, transparent 100%);
+}
+
+.case-studies-track {
   display: flex;
   gap: 20px;
-  overflow-x: auto;
-  padding-bottom: 20px;
-  scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
-  cursor: grab;
-  scroll-snap-type: x mandatory;
-  -webkit-overflow-scrolling: touch;
-}
-
-.case-studies-scroll:active {
-  cursor: grabbing;
-}
-
-.case-studies-scroll::-webkit-scrollbar {
-  height: 4px;
-}
-
-.case-studies-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.case-studies-scroll::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 2px;
-}
-
-.case-studies-scroll::-webkit-scrollbar-thumb:hover {
-  background: var(--border-hover);
+  will-change: transform;
+  padding: 4px 0;
 }
 
 .case-card {
@@ -482,7 +485,6 @@ a { color: inherit; text-decoration: none; }
   border-radius: 16px;
   overflow: hidden;
   transition: all 0.3s ease;
-  scroll-snap-align: start;
 }
 
 .case-card:hover {
@@ -1488,7 +1490,6 @@ a { color: inherit; text-decoration: none; }
       <li><a href="#models">模型</a></li>
       <li><a href="#features">功能</a></li>
       <li><a href="https://claude.guijiapi.net" target="_blank">Claude Code</a></li>
-      <li><a href="#quickstart">文档</a></li>
     </ul>
     <a href="https://api.guijiapi.net" target="_blank" class="nav-cta">控制台</a>
   </div>
@@ -1613,8 +1614,8 @@ a { color: inherit; text-decoration: none; }
           </g>
 
           <!-- Central Hub - Brand Node -->
-          <g class="api-node brand" filter="url(#glow)">
-            <rect x="165" y="125" width="70" height="70" rx="16" />
+          <g class="api-node brand">
+            <rect x="165" y="125" width="70" height="70" rx="16" filter="url(#glow)" />
             <text x="200" y="168" text-anchor="middle">API</text>
           </g>
 
@@ -1679,15 +1680,6 @@ a { color: inherit; text-decoration: none; }
       <div class="logo-item"><div class="logo-box">BotForge</div></div>
       <div class="logo-item"><div class="logo-box">NeuralX</div></div>
       <div class="logo-item"><div class="logo-box">DataMind</div></div>
-      <!-- Duplicate for seamless loop -->
-      <div class="logo-item"><div class="logo-box">DevHub</div></div>
-      <div class="logo-item"><div class="logo-box">AI Labs</div></div>
-      <div class="logo-item"><div class="logo-box">CodeFlow</div></div>
-      <div class="logo-item"><div class="logo-box">ChatBase</div></div>
-      <div class="logo-item"><div class="logo-box">PromptAI</div></div>
-      <div class="logo-item"><div class="logo-box">BotForge</div></div>
-      <div class="logo-item"><div class="logo-box">NeuralX</div></div>
-      <div class="logo-item"><div class="logo-box">DataMind</div></div>
     </div>
   </div>
 </section>
@@ -1699,136 +1691,138 @@ a { color: inherit; text-decoration: none; }
     <h2 class="case-title">看看开发者如何使用硅基API</h2>
   </div>
   <div class="case-studies-scroll">
-    <div class="case-card">
-      <div class="case-card-graphic">
-        <svg viewBox="0 0 300 160">
-          <rect x="20" y="20" width="260" height="120" rx="8" fill="#0a0a0a" stroke="#2a2a2a" stroke-width="1"/>
-          <rect x="40" y="40" width="100" height="60" rx="4" fill="#1a1a1a"/>
-          <circle cx="80" cy="70" r="20" fill="#3ecf8b" opacity="0.3"/>
-          <rect x="160" y="45" width="100" height="8" rx="2" fill="#2a2a2a"/>
-          <rect x="160" y="60" width="80" height="6" rx="2" fill="#1a1a1a"/>
-          <rect x="160" y="72" width="60" height="6" rx="2" fill="#1a1a1a"/>
-        </svg>
+    <div class="case-studies-track">
+      <div class="case-card">
+        <div class="case-card-graphic">
+          <svg viewBox="0 0 300 160">
+            <rect x="20" y="20" width="260" height="120" rx="8" fill="#0a0a0a" stroke="#2a2a2a" stroke-width="1"/>
+            <rect x="40" y="40" width="100" height="60" rx="4" fill="#1a1a1a"/>
+            <circle cx="80" cy="70" r="20" fill="#3ecf8b" opacity="0.3"/>
+            <rect x="160" y="45" width="100" height="8" rx="2" fill="#2a2a2a"/>
+            <rect x="160" y="60" width="80" height="6" rx="2" fill="#1a1a1a"/>
+            <rect x="160" y="72" width="60" height="6" rx="2" fill="#1a1a1a"/>
+          </svg>
+        </div>
+        <div class="case-card-content">
+          <div class="case-company">智能客服系统</div>
+          <div class="case-desc">使用硅基API接入 Claude 和 GPT，7 天内部署上线，处理效率提升 300%</div>
+          <a href="#" class="case-link">查看案例 →</a>
+        </div>
       </div>
-      <div class="case-card-content">
-        <div class="case-company">智能客服系统</div>
-        <div class="case-desc">使用硅基API接入 Claude 和 GPT，7 天内部署上线，处理效率提升 300%</div>
-        <a href="#" class="case-link">查看案例 →</a>
-      </div>
-    </div>
 
-    <div class="case-card case-card-featured">
-      <div class="case-card-graphic">
-        <svg viewBox="0 0 300 160">
-          <defs>
-            <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#3ecf8b;stop-opacity:0.2"/>
-              <stop offset="100%" style="stop-color:#3ecf8b;stop-opacity:0.05"/>
-            </linearGradient>
-          </defs>
-          <rect x="20" y="20" width="260" height="120" rx="8" fill="url(#grad1)" stroke="#3ecf8b" stroke-width="1" opacity="0.3"/>
-          <circle cx="150" cy="90" r="30" fill="none" stroke="#3ecf8b" stroke-width="2" opacity="0.5"/>
-          <circle cx="150" cy="90" r="20" fill="#3ecf8b" opacity="0.3"/>
-          <text x="150" y="95" text-anchor="middle" fill="#3ecf8b" font-size="14" font-weight="600">AI</text>
-        </svg>
+      <div class="case-card case-card-featured">
+        <div class="case-card-graphic">
+          <svg viewBox="0 0 300 160">
+            <defs>
+              <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#3ecf8b;stop-opacity:0.2"/>
+                <stop offset="100%" style="stop-color:#3ecf8b;stop-opacity:0.05"/>
+              </linearGradient>
+            </defs>
+            <rect x="20" y="20" width="260" height="120" rx="8" fill="url(#grad1)" stroke="#3ecf8b" stroke-width="1" opacity="0.3"/>
+            <circle cx="150" cy="90" r="30" fill="none" stroke="#3ecf8b" stroke-width="2" opacity="0.5"/>
+            <circle cx="150" cy="90" r="20" fill="#3ecf8b" opacity="0.3"/>
+            <text x="150" y="95" text-anchor="middle" fill="#3ecf8b" font-size="14" font-weight="600">AI</text>
+          </svg>
+        </div>
+        <div class="case-card-content">
+          <div class="case-company">AI 编程助手</div>
+          <div class="case-desc">集成 500+ 模型，为用户提供智能代码补全和错误诊断，日活用户突破 10 万</div>
+          <a href="#" class="case-link">查看案例 →</a>
+        </div>
       </div>
-      <div class="case-card-content">
-        <div class="case-company">AI 编程助手</div>
-        <div class="case-desc">集成 500+ 模型，为用户提供智能代码补全和错误诊断，日活用户突破 10 万</div>
-        <a href="#" class="case-link">查看案例 →</a>
-      </div>
-    </div>
 
-    <div class="case-card">
-      <div class="case-card-graphic">
-        <svg viewBox="0 0 300 160">
-          <rect x="20" y="20" width="260" height="120" rx="8" fill="#0a0a0a" stroke="#2a2a2a" stroke-width="1"/>
-          <rect x="40" y="40" width="50" height="50" rx="25" fill="#1a1a1a"/>
-          <rect x="100" y="50" width="120" height="6" rx="2" fill="#2a2a2a"/>
-          <rect x="100" y="65" width="90" height="4" rx="2" fill="#1a1a1a"/>
-          <rect x="40" y="105" width="220" height="25" rx="4" fill="#1a1a1a"/>
-        </svg>
+      <div class="case-card">
+        <div class="case-card-graphic">
+          <svg viewBox="0 0 300 160">
+            <rect x="20" y="20" width="260" height="120" rx="8" fill="#0a0a0a" stroke="#2a2a2a" stroke-width="1"/>
+            <rect x="40" y="40" width="50" height="50" rx="25" fill="#1a1a1a"/>
+            <rect x="100" y="50" width="120" height="6" rx="2" fill="#2a2a2a"/>
+            <rect x="100" y="65" width="90" height="4" rx="2" fill="#1a1a1a"/>
+            <rect x="40" y="105" width="220" height="25" rx="4" fill="#1a1a1a"/>
+          </svg>
+        </div>
+        <div class="case-card-content">
+          <div class="case-company">内容创作平台</div>
+          <div class="case-desc">通过统一 API 调度多个模型，内容生成成本降低 60%，质量显著提升</div>
+          <a href="#" class="case-link">查看案例 →</a>
+        </div>
       </div>
-      <div class="case-card-content">
-        <div class="case-company">内容创作平台</div>
-        <div class="case-desc">通过统一 API 调度多个模型，内容生成成本降低 60%，质量显著提升</div>
-        <a href="#" class="case-link">查看案例 →</a>
-      </div>
-    </div>
 
-    <div class="case-card">
-      <div class="case-card-graphic">
-        <svg viewBox="0 0 300 160">
-          <rect x="20" y="20" width="260" height="120" rx="8" fill="#0a0a0a" stroke="#2a2a2a" stroke-width="1"/>
-          <circle cx="80" cy="70" r="25" fill="#1a1a1a" stroke="#2a2a2a"/>
-          <circle cx="150" cy="70" r="25" fill="#1a1a1a" stroke="#2a2a2a"/>
-          <circle cx="220" cy="70" r="25" fill="#1a1a1a" stroke="#2a2a2a"/>
-          <line x1="105" y1="70" x2="125" y2="70" stroke="#2a2a2a" stroke-width="2"/>
-          <line x1="175" y1="70" x2="195" y2="70" stroke="#2a2a2a" stroke-width="2"/>
-        </svg>
+      <div class="case-card">
+        <div class="case-card-graphic">
+          <svg viewBox="0 0 300 160">
+            <rect x="20" y="20" width="260" height="120" rx="8" fill="#0a0a0a" stroke="#2a2a2a" stroke-width="1"/>
+            <circle cx="80" cy="70" r="25" fill="#1a1a1a" stroke="#2a2a2a"/>
+            <circle cx="150" cy="70" r="25" fill="#1a1a1a" stroke="#2a2a2a"/>
+            <circle cx="220" cy="70" r="25" fill="#1a1a1a" stroke="#2a2a2a"/>
+            <line x1="105" y1="70" x2="125" y2="70" stroke="#2a2a2a" stroke-width="2"/>
+            <line x1="175" y1="70" x2="195" y2="70" stroke="#2a2a2a" stroke-width="2"/>
+          </svg>
+        </div>
+        <div class="case-card-content">
+          <div class="case-company">多 Agent 系统</div>
+          <div class="case-desc">构建复杂 Agent 协作网络，使用不同模型处理特定任务，响应速度提升 5 倍</div>
+          <a href="#" class="case-link">查看案例 →</a>
+        </div>
       </div>
-      <div class="case-card-content">
-        <div class="case-company">多 Agent 系统</div>
-        <div class="case-desc">构建复杂 Agent 协作网络，使用不同模型处理特定任务，响应速度提升 5 倍</div>
-        <a href="#" class="case-link">查看案例 →</a>
-      </div>
-    </div>
 
-    <div class="case-card">
-      <div class="case-card-graphic">
-        <svg viewBox="0 0 300 160">
-          <rect x="20" y="20" width="260" height="120" rx="8" fill="#0a0a0a" stroke="#2a2a2a" stroke-width="1"/>
-          <rect x="40" y="40" width="220" height="30" rx="4" fill="#1a1a1a"/>
-          <rect x="50" y="48" width="60" height="14" rx="2" fill="#2a2a2a"/>
-          <rect x="40" y="80" width="100" height="40" rx="4" fill="#1a1a1a"/>
-          <rect x="160" y="80" width="100" height="40" rx="4" fill="#1a1a1a"/>
-        </svg>
+      <div class="case-card">
+        <div class="case-card-graphic">
+          <svg viewBox="0 0 300 160">
+            <rect x="20" y="20" width="260" height="120" rx="8" fill="#0a0a0a" stroke="#2a2a2a" stroke-width="1"/>
+            <rect x="40" y="40" width="220" height="30" rx="4" fill="#1a1a1a"/>
+            <rect x="50" y="48" width="60" height="14" rx="2" fill="#2a2a2a"/>
+            <rect x="40" y="80" width="100" height="40" rx="4" fill="#1a1a1a"/>
+            <rect x="160" y="80" width="100" height="40" rx="4" fill="#1a1a1a"/>
+          </svg>
+        </div>
+        <div class="case-card-content">
+          <div class="case-company">数据分析平台</div>
+          <div class="case-desc">利用 GPT-4 和 Claude 进行智能数据分析，自动生成报告，效率提升 10 倍</div>
+          <a href="#" class="case-link">查看案例 →</a>
+        </div>
       </div>
-      <div class="case-card-content">
-        <div class="case-company">数据分析平台</div>
-        <div class="case-desc">利用 GPT-4 和 Claude 进行智能数据分析，自动生成报告，效率提升 10 倍</div>
-        <a href="#" class="case-link">查看案例 →</a>
-      </div>
-    </div>
 
-    <div class="case-card">
-      <div class="case-card-graphic">
-        <svg viewBox="0 0 300 160">
-          <rect x="20" y="20" width="260" height="120" rx="8" fill="#0a0a0a" stroke="#2a2a2a" stroke-width="1"/>
-          <rect x="40" y="40" width="60" height="80" rx="4" fill="#1a1a1a"/>
-          <rect x="120" y="40" width="60" height="80" rx="4" fill="#1a1a1a"/>
-          <rect x="200" y="40" width="60" height="80" rx="4" fill="#1a1a1a"/>
-          <text x="70" y="85" text-anchor="middle" fill="#3ecf8b" font-size="12">En</text>
-          <text x="150" y="85" text-anchor="middle" fill="#3ecf8b" font-size="12">中</text>
-          <text x="230" y="85" text-anchor="middle" fill="#3ecf8b" font-size="12">Ja</text>
-        </svg>
+      <div class="case-card">
+        <div class="case-card-graphic">
+          <svg viewBox="0 0 300 160">
+            <rect x="20" y="20" width="260" height="120" rx="8" fill="#0a0a0a" stroke="#2a2a2a" stroke-width="1"/>
+            <rect x="40" y="40" width="60" height="80" rx="4" fill="#1a1a1a"/>
+            <rect x="120" y="40" width="60" height="80" rx="4" fill="#1a1a1a"/>
+            <rect x="200" y="40" width="60" height="80" rx="4" fill="#1a1a1a"/>
+            <text x="70" y="85" text-anchor="middle" fill="#3ecf8b" font-size="12">En</text>
+            <text x="150" y="85" text-anchor="middle" fill="#3ecf8b" font-size="12">中</text>
+            <text x="230" y="85" text-anchor="middle" fill="#3ecf8b" font-size="12">Ja</text>
+          </svg>
+        </div>
+        <div class="case-card-content">
+          <div class="case-company">多语言翻译</div>
+          <div class="case-desc">集成多模型翻译引擎，支持 50+ 语言实时互译，翻译质量业界领先</div>
+          <a href="#" class="case-link">查看案例 →</a>
+        </div>
       </div>
-      <div class="case-card-content">
-        <div class="case-company">多语言翻译</div>
-        <div class="case-desc">集成多模型翻译引擎，支持 50+ 语言实时互译，翻译质量业界领先</div>
-        <a href="#" class="case-link">查看案例 →</a>
-      </div>
-    </div>
 
-    <div class="case-card">
-      <div class="case-card-graphic">
-        <svg viewBox="0 0 300 160">
-          <defs>
-            <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:0.2"/>
-              <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:0.05"/>
-            </linearGradient>
-          </defs>
-          <rect x="20" y="20" width="260" height="120" rx="8" fill="url(#grad2)" stroke="#8b5cf6" stroke-width="1" opacity="0.3"/>
-          <rect x="60" y="50" width="180" height="60" rx="4" fill="#0a0a0a" stroke="#8b5cf6" stroke-width="1" opacity="0.5"/>
-          <rect x="80" y="65" width="40" height="8" rx="2" fill="#8b5cf6" opacity="0.6"/>
-          <rect x="80" y="80" width="60" height="6" rx="2" fill="#2a2a2a"/>
-        </svg>
-      </div>
-      <div class="case-card-content">
-        <div class="case-company">智能文档处理</div>
-        <div class="case-desc">自动化文档解析和知识提取，支持 PDF、Word、图片等多种格式</div>
-        <a href="#" class="case-link">查看案例 →</a>
+      <div class="case-card">
+        <div class="case-card-graphic">
+          <svg viewBox="0 0 300 160">
+            <defs>
+              <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:0.2"/>
+                <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:0.05"/>
+              </linearGradient>
+            </defs>
+            <rect x="20" y="20" width="260" height="120" rx="8" fill="url(#grad2)" stroke="#8b5cf6" stroke-width="1" opacity="0.3"/>
+            <rect x="60" y="50" width="180" height="60" rx="4" fill="#0a0a0a" stroke="#8b5cf6" stroke-width="1" opacity="0.5"/>
+            <rect x="80" y="65" width="40" height="8" rx="2" fill="#8b5cf6" opacity="0.6"/>
+            <rect x="80" y="80" width="60" height="6" rx="2" fill="#2a2a2a"/>
+          </svg>
+        </div>
+        <div class="case-card-content">
+          <div class="case-company">智能文档处理</div>
+          <div class="case-desc">自动化文档解析和知识提取，支持 PDF、Word、图片等多种格式</div>
+          <a href="#" class="case-link">查看案例 →</a>
+        </div>
       </div>
     </div>
   </div>
@@ -2179,38 +2173,87 @@ function copyCode(btn, id) {
   setTimeout(() => btn.textContent = '复制', 1500);
 }
 
-// Drag to scroll for case studies
-const caseScroll = document.querySelector('.case-studies-scroll');
-if (caseScroll) {
-  let isDown = false;
-  let startX;
-  let scrollLeft;
+// Seamless marquee using requestAnimationFrame for smooth infinite scroll
+(function() {
+  const logoTrack = document.querySelector('.logo-track');
+  const logoMarquee = document.querySelector('.logo-marquee');
+  if (!logoTrack || !logoMarquee) return;
 
-  caseScroll.addEventListener('mousedown', (e) => {
-    isDown = true;
-    caseScroll.classList.add('active');
-    startX = e.pageX - caseScroll.offsetLeft;
-    scrollLeft = caseScroll.scrollLeft;
-  });
+  const originalItems = Array.from(logoTrack.querySelectorAll('.logo-item')).slice(0, 8);
+  const itemWidth = 120 + 24; // width + gap
+  const originalSetWidth = originalItems.length * itemWidth;
 
-  caseScroll.addEventListener('mouseleave', () => {
-    isDown = false;
-    caseScroll.classList.remove('active');
-  });
+  // Duplicate items to ensure seamless loop (at least 3 sets for safety)
+  for (let i = 0; i < 3; i++) {
+    originalItems.forEach(item => {
+      logoTrack.appendChild(item.cloneNode(true));
+    });
+  }
 
-  caseScroll.addEventListener('mouseup', () => {
-    isDown = false;
-    caseScroll.classList.remove('active');
-  });
+  let position = 0;
+  let speed = 0.5; // pixels per frame
+  let isPaused = false;
+  let rafId = null;
 
-  caseScroll.addEventListener('mousemove', (e) => {
-    if (!isDown) return;
-    e.preventDefault();
-    const x = e.pageX - caseScroll.offsetLeft;
-    const walk = (x - startX) * 2;
-    caseScroll.scrollLeft = scrollLeft - walk;
-  });
-}
+  function animate() {
+    if (!isPaused) {
+      position += speed;
+      // Reset when we've scrolled one full set (seamless loop)
+      if (position >= originalSetWidth) {
+        position = 0;
+      }
+      logoTrack.style.transform = `translateX(-${position}px)`;
+    }
+    rafId = requestAnimationFrame(animate);
+  }
+
+  // Pause on hover
+  logoMarquee.addEventListener('mouseenter', () => isPaused = true);
+  logoMarquee.addEventListener('mouseleave', () => isPaused = false);
+
+  // Start animation
+  animate();
+})();
+
+// Seamless marquee for case cards
+(function() {
+  const caseTrack = document.querySelector('.case-studies-track');
+  const caseScroll = document.querySelector('.case-studies-scroll');
+  if (!caseTrack || !caseScroll) return;
+
+  const originalCards = Array.from(caseTrack.querySelectorAll('.case-card'));
+  const cardWidth = 320 + 20; // width + gap
+  const originalSetWidth = originalCards.length * cardWidth;
+
+  // Duplicate cards to ensure seamless loop
+  for (let i = 0; i < 3; i++) {
+    originalCards.forEach(card => {
+      caseTrack.appendChild(card.cloneNode(true));
+    });
+  }
+
+  let position = 0;
+  let speed = 0.8; // pixels per frame (slightly slower for cards)
+  let isPaused = false;
+  let rafId = null;
+
+  function animate() {
+    if (!isPaused) {
+      position += speed;
+      if (position >= originalSetWidth) {
+        position = 0;
+      }
+      caseTrack.style.transform = `translateX(-${position}px)`;
+    }
+    rafId = requestAnimationFrame(animate);
+  }
+
+  // Pause on hover
+  caseScroll.addEventListener('mouseenter', () => isPaused = true);
+  caseScroll.addEventListener('mouseleave', () => isPaused = false);
+
+  animate();
+})();
 </script>
 
 </body>
