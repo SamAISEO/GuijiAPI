@@ -6,12 +6,62 @@
 $ErrorActionPreference = "Stop"
 
 $API_BASE_URL = "https://api.guijiapi.net"
-$MODEL_1 = "claude-sonnet-4-6"
-$MODEL_2 = "claude-opus-4-7"
-$MODEL_3 = "claude-opus-4-6"
-$MODEL_4 = "claude-sonnet-4-5-20250929"
 $NODE_MIN_VER = "16.0.0"
-$PROVIDER_NAME = "anthropic"
+
+# ── 模型定义 ─────────────────────────────────────────────────
+# Anthropic 系列
+$ANTHROPIC_MODELS = @(
+    @{ name = "claude-opus-4-7"; desc = "最新最强，较慢" },
+    @{ name = "claude-sonnet-4-6"; desc = "推荐，速度快" },
+    @{ name = "claude-opus-4-6"; desc = "旗舰级" },
+    @{ name = "claude-opus-4-5-20251101"; desc = "最新版本" },
+    @{ name = "claude-sonnet-4-5-20250929"; desc = "稳定版本" }
+)
+
+# DeepSeek 系列
+$DEEPSEEK_MODELS = @(
+    @{ name = "deepseek-v4-flash"; desc = "高性价比" },
+    @{ name = "deepseek-v4-pro"; desc = "高性能" },
+    @{ name = "deepseek-v3.2"; desc = "稳定版本" }
+)
+
+# ChatGLM 系列
+$CHATGLM_MODELS = @(
+    @{ name = "glm-5.1"; desc = "最新版本" },
+    @{ name = "glm-5"; desc = "高性能" },
+    @{ name = "glm-4.7"; desc = "稳定版本" }
+)
+
+# Minimax 系列
+$MINIMAX_MODELS = @(
+    @{ name = "MiniMax-M2.7"; desc = "最新版本" },
+    @{ name = "MiniMax-M2.5"; desc = "稳定版本" }
+)
+
+# Moonshot 系列
+$MOONSHOT_MODELS = @(
+    @{ name = "kimi-k2.5"; desc = "最新版本" },
+    @{ name = "kimi-k2"; desc = "稳定版本" }
+)
+
+# Bailian 系列
+$BAILIAN_MODELS = @(
+    @{ name = "qwen3.6-max-preview"; desc = "最新版本" },
+    @{ name = "qwen3.6-plus"; desc = "高性能" },
+    @{ name = "qwen3.6"; desc = "标准版本" }
+)
+
+# Provider 定义
+$PROVIDERS = @{
+    "anthropic" = @{
+        api_base_url = "$API_BASE_URL/v1/messages"
+        transformer = @{ use = @("Anthropic") }
+    }
+    "openai" = @{
+        api_base_url = "$API_BASE_URL/v1/chat/completions"
+        transformer = @{ use = @("OpenAI") }
+    }
+}
 
 # ── 颜色函数 ─────────────────────────────────────────────────
 function Write-Info($msg)    { Write-Host "[INFO]  $msg" -ForegroundColor Cyan }
@@ -342,35 +392,45 @@ if ($API_KEY -notmatch '^[A-Za-z0-9_-]{10,}$') {
 Write-Success "API Key 已设置"
 
 # ── 5. 选择模型 ──────────────────────────────────────────────
-Write-Step "选择默认模型"
-Write-Host "  1) $MODEL_1（推荐，速度快）"
-Write-Host "  2) $MODEL_2（最新最强，较慢）"
-Write-Host "  3) $MODEL_3（旗舰级）"
-Write-Host "  4) $MODEL_4（稳定版本）"
-Write-Host "  5) 手动输入其他模型名"
+Write-Step "选择模型供应商"
+Write-Host "  1) Anthropic（Claude 系列）" -ForegroundColor Cyan
+Write-Host "  2) DeepSeek" -ForegroundColor Cyan
+Write-Host "  3) ChatGLM（智谱）" -ForegroundColor Cyan
+Write-Host "  4) Minimax" -ForegroundColor Cyan
+Write-Host "  5) Moonshot（月之暗面）" -ForegroundColor Cyan
+Write-Host "  6) Bailian（阿里云百炼）" -ForegroundColor Cyan
 Write-Host ""
 
-$MODEL_CHOICE = Read-Host "请选择 (1/2/3/4/5，默认 1): "
-if ([string]::IsNullOrWhiteSpace($MODEL_CHOICE)) { $MODEL_CHOICE = "1" }
+$VENDOR_CHOICE = Read-Host "请选择供应商 (1/2/3/4/5/6，默认 1): "
+if ([string]::IsNullOrWhiteSpace($VENDOR_CHOICE)) { $VENDOR_CHOICE = "1" }
 
-switch ($MODEL_CHOICE) {
-    "1" { $MODEL = $MODEL_1 }
-    "2" { $MODEL = $MODEL_2 }
-    "3" { $MODEL = $MODEL_3 }
-    "4" { $MODEL = $MODEL_4 }
-    "5" {
-        $MODEL = (Read-Host "请输入模型名: ").Trim()
-        if ([string]::IsNullOrWhiteSpace($MODEL)) {
-            Write-Warn "模型名为空，使用默认模型"
-            $MODEL = $MODEL_1
-        }
-    }
-    default {
-        Write-Warn "无效选择，使用默认模型 1"
-        $MODEL = $MODEL_1
-    }
+# 根据供应商选择获取对应模型列表
+switch ($VENDOR_CHOICE) {
+    "1" { $SELECTED_MODELS = $ANTHROPIC_MODELS; $DEFAULT_PROVIDER = "anthropic"; $VENDOR_NAME = "Anthropic" }
+    "2" { $SELECTED_MODELS = $DEEPSEEK_MODELS; $DEFAULT_PROVIDER = "anthropic"; $VENDOR_NAME = "DeepSeek" }
+    "3" { $SELECTED_MODELS = $CHATGLM_MODELS; $DEFAULT_PROVIDER = "openai"; $VENDOR_NAME = "ChatGLM" }
+    "4" { $SELECTED_MODELS = $MINIMAX_MODELS; $DEFAULT_PROVIDER = "openai"; $VENDOR_NAME = "Minimax" }
+    "5" { $SELECTED_MODELS = $MOONSHOT_MODELS; $DEFAULT_PROVIDER = "openai"; $VENDOR_NAME = "Moonshot" }
+    "6" { $SELECTED_MODELS = $BAILIAN_MODELS; $DEFAULT_PROVIDER = "openai"; $VENDOR_NAME = "Bailian" }
+    default { $SELECTED_MODELS = $ANTHROPIC_MODELS; $DEFAULT_PROVIDER = "anthropic"; $VENDOR_NAME = "Anthropic" }
 }
-Write-Success "已选择模型: $MODEL"
+
+Write-Host ""
+Write-Step "选择 $VENDOR_NAME 模型"
+for ($i = 0; $i -lt $SELECTED_MODELS.Count; $i++) {
+    $model = $SELECTED_MODELS[$i]
+    $marker = if ($i -eq 0) { "（推荐）" } else { "" }
+    Write-Host "  $($i+1)) $($model.name) $($model.desc) $marker" -ForegroundColor Cyan
+}
+Write-Host ""
+
+$MODEL_INDEX = Read-Host "请选择 (1/$($SELECTED_MODELS.Count)，默认 1): "
+if ([string]::IsNullOrWhiteSpace($MODEL_INDEX)) { $MODEL_INDEX = "1" }
+$MODEL_INDEX = [int]$MODEL_INDEX - 1
+if ($MODEL_INDEX -lt 0 -or $MODEL_INDEX -ge $SELECTED_MODELS.Count) { $MODEL_INDEX = 0 }
+
+$MODEL = $SELECTED_MODELS[$MODEL_INDEX].name
+Write-Success "已选择模型: $MODEL ($VENDOR_NAME)"
 
 # ── 6. 生成 config.json ──────────────────────────────────────
 Write-Step "生成配置文件"
@@ -379,11 +439,32 @@ $CONFIG_DIR = "$env:USERPROFILE\.claude-code-router"
 $CONFIG_FILE = "$CONFIG_DIR\config.json"
 New-Item -ItemType Directory -Path $CONFIG_DIR -Force | Out-Null
 
-$DEFAULT_PROVIDER = "$PROVIDER_NAME,$MODEL"
-$NORMALIZED_URL = Normalize-BaseUrl $API_BASE_URL
-$API_ENDPOINT = "$NORMALIZED_URL/v1/messages"
+# 构建完整的 Providers 数组
+$allAnthropicModels = @($ANTHROPIC_MODELS.name) + @($DEEPSEEK_MODELS.name)
+$allOpenAIModels = @($CHATGLM_MODELS.name) + @($MINIMAX_MODELS.name) + @($MOONSHOT_MODELS.name) + @($BAILIAN_MODELS.name)
 
-# 显式使用 [string[]] 确保单元素时序列化为 JSON 数组而非字符串
+$providers = @(
+    [ordered]@{
+        name         = "anthropic"
+        api_base_url = $PROVIDERS["anthropic"].api_base_url
+        api_key      = $API_KEY
+        models       = [string[]]$allAnthropicModels
+        transformer  = $PROVIDERS["anthropic"].transformer
+    },
+    [ordered]@{
+        name         = "openai"
+        api_base_url = $PROVIDERS["openai"].api_base_url
+        api_key      = $API_KEY
+        models       = [string[]]$allOpenAIModels
+        transformer  = $PROVIDERS["openai"].transformer
+    }
+)
+
+$routerDefault = "anthropic,$MODEL"
+if ($DEFAULT_PROVIDER -eq "openai") {
+    $routerDefault = "openai,$MODEL"
+}
+
 $config = [ordered]@{
     LOG            = $false
     CLAUDE_PATH    = ""
@@ -393,28 +474,20 @@ $config = [ordered]@{
     API_TIMEOUT_MS = "600000"
     PROXY_URL      = ""
     Transformers   = @()
-    Providers      = @(
-        [ordered]@{
-            name         = $PROVIDER_NAME
-            api_base_url = $API_ENDPOINT
-            api_key      = $API_KEY
-            models       = [string[]]@($MODEL)
-            transformer  = [ordered]@{ use = [string[]]@("Anthropic") }
-        }
-    )
+    Providers      = $providers
     Router         = [ordered]@{
-        default              = $DEFAULT_PROVIDER
-        background           = $DEFAULT_PROVIDER
-        think                = $DEFAULT_PROVIDER
-        longContext          = $DEFAULT_PROVIDER
+        default              = $routerDefault
+        background           = $routerDefault
+        think                = $routerDefault
+        longContext          = $routerDefault
         longContextThreshold = 60000
-        webSearch            = $DEFAULT_PROVIDER
+        webSearch            = $routerDefault
     }
 }
 
 $config | ConvertTo-Json -Depth 10 | Set-Content -Path $CONFIG_FILE -Encoding UTF8
 Write-Success "配置文件已写入: $CONFIG_FILE"
-Write-Info "已配置 API 端点: $API_ENDPOINT"
+Write-Info "默认模型: $MODEL (provider: $DEFAULT_PROVIDER)"
 
 # ── 7. 配置环境变量 ──────────────────────────────────────────
 Write-Step "配置环境变量"
@@ -591,3 +664,7 @@ if (Test-Path "$env:USERPROFILE\.claude\.credentials.json") {
     Write-Warn "⚠ OAuth 登录凭证残留！请在安装完成后执行: claude /logout"
 }
 Write-Host ""
+
+# ── 暂停等待用户确认 ───────────────────────────────────────────
+Write-Host "按 Enter 键退出..." -ForegroundColor Yellow
+Read-Host

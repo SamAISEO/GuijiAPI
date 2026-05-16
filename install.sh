@@ -7,12 +7,36 @@
 set -e
 
 API_BASE_URL="https://api.guijiapi.net"
-MODEL_1="claude-sonnet-4-6"
-MODEL_2="claude-opus-4-7"
-MODEL_3="claude-opus-4-6"
-MODEL_4="claude-sonnet-4-5-20250929"
 NODE_MIN_VER="16.0.0"
-PROVIDER_NAME="anthropic"
+
+# ── 模型定义 ─────────────────────────────────────────────────
+# Anthropic 系列
+ANTHROPIC_MODELS=("claude-opus-4-7" "claude-sonnet-4-6" "claude-opus-4-6" "claude-opus-4-5-20251101" "claude-sonnet-4-5-20250929")
+ANTHROPIC_DESCS=("最新最强，较慢" "推荐，速度快" "旗舰级" "最新版本" "稳定版本")
+
+# DeepSeek 系列
+DEEPSEEK_MODELS=("deepseek-v4-flash" "deepseek-v4-pro" "deepseek-v3.2")
+DEEPSEEK_DESCS=("高性价比" "高性能" "稳定版本")
+
+# ChatGLM 系列
+CHATGLM_MODELS=("glm-5.1" "glm-5" "glm-4.7")
+CHATGLM_DESCS=("最新版本" "高性能" "稳定版本")
+
+# Minimax 系列
+MINIMAX_MODELS=("MiniMax-M2.7" "MiniMax-M2.5")
+MINIMAX_DESCS=("最新版本" "稳定版本")
+
+# Moonshot 系列
+MOONSHOT_MODELS=("kimi-k2.5" "kimi-k2")
+MOONSHOT_DESCS=("最新版本" "稳定版本")
+
+# Bailian 系列
+BAILIAN_MODELS=("qwen3.6-max-preview" "qwen3.6-plus" "qwen3.6")
+BAILIAN_DESCS=("最新版本" "高性能" "标准版本")
+
+# Provider 定义
+ANTHROPIC_API_BASE_URL="${API_BASE_URL}/v1/messages"
+OPENAI_API_BASE_URL="${API_BASE_URL}/v1/chat/completions"
 
 # ── 颜色 ────────────────────────────────────────────────────
 RED='\033[0;31m'; GREEN='\033[0;32m'; YELLOW='\033[1;33m'
@@ -501,34 +525,46 @@ fi
 success "API Key 已设置"
 
 # ── 5. 选择模型 ──────────────────────────────────────────────
-step "选择默认模型"
-echo "  1) ${MODEL_1}（推荐，速度快）"
-echo "  2) ${MODEL_2}（最新最强，较慢）"
-echo "  3) ${MODEL_3}（旗舰级）"
-echo "  4) ${MODEL_4}（稳定版本）"
-echo "  5) 手动输入其他模型名"
+step "选择模型供应商"
+echo -e "${CYAN}  1) Anthropic（Claude 系列）${NC}"
+echo -e "${CYAN}  2) DeepSeek${NC}"
+echo -e "${CYAN}  3) ChatGLM（智谱）${NC}"
+echo -e "${CYAN}  4) Minimax${NC}"
+echo -e "${CYAN}  5) Moonshot（月之暗面）${NC}"
+echo -e "${CYAN}  6) Bailian（阿里云百炼）${NC}"
 echo ""
 
-MODEL_CHOICE=$(read_input "请选择 (1/2/3/4/5，默认 1): ")
-MODEL_CHOICE="${MODEL_CHOICE:-1}"
+VENDOR_CHOICE=$(read_input "请选择供应商 (1/2/3/4/5/6，默认 1): ")
+VENDOR_CHOICE="${VENDOR_CHOICE:-1}"
 
-case "$MODEL_CHOICE" in
-  1) MODEL="$MODEL_1" ;;
-  2) MODEL="$MODEL_2" ;;
-  3) MODEL="$MODEL_3" ;;
-  4) MODEL="$MODEL_4" ;;
-  5)
-    MODEL=$(read_input "请输入模型名: ")
-    MODEL=$(strip_line_breaks "$MODEL")
-    if [ -z "$MODEL" ]; then
-      warn "模型名为空，使用默认模型"
-      MODEL="$MODEL_1"
-    fi
-    ;;
-  *) warn "无效选择，使用默认模型 1"; MODEL="$MODEL_1" ;;
+# 根据供应商选择设置模型列表
+case "$VENDOR_CHOICE" in
+  2) SELECTED_MODELS=("${DEEPSEEK_MODELS[@]}"); SELECTED_DESCS=("${DEEPSEEK_DESCS[@]}"); DEFAULT_PROVIDER="anthropic"; VENDOR_NAME="DeepSeek" ;;
+  3) SELECTED_MODELS=("${CHATGLM_MODELS[@]}"); SELECTED_DESCS=("${CHATGLM_DESCS[@]}"); DEFAULT_PROVIDER="openai"; VENDOR_NAME="ChatGLM" ;;
+  4) SELECTED_MODELS=("${MINIMAX_MODELS[@]}"); SELECTED_DESCS=("${MINIMAX_DESCS[@]}"); DEFAULT_PROVIDER="openai"; VENDOR_NAME="Minimax" ;;
+  5) SELECTED_MODELS=("${MOONSHOT_MODELS[@]}"); SELECTED_DESCS=("${MOONSHOT_DESCS[@]}"); DEFAULT_PROVIDER="openai"; VENDOR_NAME="Moonshot" ;;
+  6) SELECTED_MODELS=("${BAILIAN_MODELS[@]}"); SELECTED_DESCS=("${BAILIAN_DESCS[@]}"); DEFAULT_PROVIDER="openai"; VENDOR_NAME="Bailian" ;;
+  *) SELECTED_MODELS=("${ANTHROPIC_MODELS[@]}"); SELECTED_DESCS=("${ANTHROPIC_DESCS[@]}"); DEFAULT_PROVIDER="anthropic"; VENDOR_NAME="Anthropic" ;;
 esac
-MODEL=$(strip_line_breaks "$MODEL")
-success "已选择模型: $MODEL"
+
+step "选择 ${VENDOR_NAME} 模型"
+MODEL_COUNT=${#SELECTED_MODELS[@]}
+for i in $(seq 0 $((MODEL_COUNT - 1))); do
+  marker=""
+  if [ $i -eq 0 ]; then marker="（推荐）"; fi
+  echo -e "${CYAN}  $((i+1))) ${SELECTED_MODELS[$i]} ${SELECTED_DESCS[$i]} $marker${NC}"
+done
+echo ""
+
+MODEL_CHOICE=$(read_input "请选择 (1/$MODEL_COUNT，默认 1): ")
+MODEL_CHOICE="${MODEL_CHOICE:-1}"
+MODEL_INDEX=$((MODEL_CHOICE - 1))
+if [ "$MODEL_INDEX" -lt 0 ] || [ "$MODEL_INDEX" -ge "$MODEL_COUNT" ]; then
+  MODEL_INDEX=0
+fi
+
+MODEL="${SELECTED_MODELS[$MODEL_INDEX]}"
+success "已选择模型: $MODEL ($VENDOR_NAME)"
 
 # ── 6. 生成 config.json ──────────────────────────────────────
 step "生成配置文件"
@@ -551,13 +587,35 @@ if [ -f "$CONFIG_FILE" ]; then
 fi
 
 if [ "$SKIP_CONFIG" != "true" ]; then
-  DEFAULT_PROVIDER="${PROVIDER_NAME},${MODEL}"
-  # 硅基API使用OpenAI兼容格式，端点为 /v1/messages
-  if command -v python3 &>/dev/null; then
-    python3 - "$CONFIG_FILE" "$PROVIDER_NAME" "$(normalize_base_url "$API_BASE_URL")/v1/messages" "$API_KEY" "$MODEL" "$DEFAULT_PROVIDER" <<'PYEOF'
-import json, sys
+  # 构建所有模型列表
+  ALL_ANTHROPIC_MODELS=("${ANTHROPIC_MODELS[@]}" "${DEEPSEEK_MODELS[@]}")
+  ALL_OPENAI_MODELS=("${CHATGLM_MODELS[@]}" "${MINIMAX_MODELS[@]}" "${MOONSHOT_MODELS[@]}" "${BAILIAN_MODELS[@]}")
 
-path, provider_name, api_base_url, api_key, model, default_provider = sys.argv[1:7]
+  # 设置默认 provider
+  if [ "$DEFAULT_PROVIDER" = "openai" ]; then
+    ROUTER_DEFAULT="openai,${MODEL}"
+  else
+    ROUTER_DEFAULT="anthropic,${MODEL}"
+  fi
+
+  # 使用 python3 生成 JSON（更可靠）
+  if command -v python3 &>/dev/null; then
+    python3 - "$CONFIG_FILE" "$ANTHROPIC_API_BASE_URL" "$OPENAI_API_BASE_URL" "$API_KEY" "${ALL_ANTHROPIC_MODELS[@]}" -- "${ALL_OPENAI_MODELS[@]}" "$ROUTER_DEFAULT" <<'PYEOF'
+import json, sys
+path, anthropic_url, openai_url, api_key = sys.argv[1:5]
+router_default = sys.argv[5]
+# Models are passed as remaining args after api_key
+anthropic_models = []
+openai_models = []
+is_openai = False
+for arg in sys.argv[6:]:
+    if arg == "--":
+        is_openai = True
+        continue
+    if is_openai:
+        openai_models.append(arg)
+    else:
+        anthropic_models.append(arg)
 
 config = {
     "LOG": False,
@@ -570,20 +628,27 @@ config = {
     "Transformers": [],
     "Providers": [
         {
-            "name": provider_name,
-            "api_base_url": api_base_url,
+            "name": "anthropic",
+            "api_base_url": anthropic_url,
             "api_key": api_key,
-            "models": [model],
+            "models": anthropic_models,
             "transformer": {"use": ["Anthropic"]},
+        },
+        {
+            "name": "openai",
+            "api_base_url": openai_url,
+            "api_key": api_key,
+            "models": openai_models,
+            "transformer": {"use": ["OpenAI"]},
         }
     ],
     "Router": {
-        "default": default_provider,
-        "background": default_provider,
-        "think": default_provider,
-        "longContext": default_provider,
+        "default": router_default,
+        "background": router_default,
+        "think": router_default,
+        "longContext": router_default,
         "longContextThreshold": 60000,
-        "webSearch": default_provider,
+        "webSearch": router_default,
     },
 }
 
@@ -591,7 +656,7 @@ with open(path, "w", encoding="utf-8") as f:
     json.dump(config, f, indent=2)
 PYEOF
   else
-    # API_KEY 中可能含引号等特殊字符，此路径已通过格式校验过滤
+    # 回退方案：直接写入 JSON（API_KEY 中可能有特殊字符）
     cat > "$CONFIG_FILE" <<EOF
 {
   "LOG": false,
@@ -604,20 +669,27 @@ PYEOF
   "Transformers": [],
   "Providers": [
     {
-      "name": "${PROVIDER_NAME}",
-      "api_base_url": "$(normalize_base_url "$API_BASE_URL")/v1/messages",
+      "name": "anthropic",
+      "api_base_url": "${ANTHROPIC_API_BASE_URL}",
       "api_key": "${API_KEY}",
-      "models": ["${MODEL}"],
+      "models": ["$(IFS=, && echo "${ALL_ANTHROPIC_MODELS[*]}")"],
       "transformer": { "use": ["Anthropic"] }
+    },
+    {
+      "name": "openai",
+      "api_base_url": "${OPENAI_API_BASE_URL}",
+      "api_key": "${API_KEY}",
+      "models": ["$(IFS=, && echo "${ALL_OPENAI_MODELS[*]}")"],
+      "transformer": { "use": ["OpenAI"] }
     }
   ],
   "Router": {
-    "default": "${DEFAULT_PROVIDER}",
-    "background": "${DEFAULT_PROVIDER}",
-    "think": "${DEFAULT_PROVIDER}",
-    "longContext": "${DEFAULT_PROVIDER}",
+    "default": "${ROUTER_DEFAULT}",
+    "background": "${ROUTER_DEFAULT}",
+    "think": "${ROUTER_DEFAULT}",
+    "longContext": "${ROUTER_DEFAULT}",
     "longContextThreshold": 60000,
-    "webSearch": "${DEFAULT_PROVIDER}"
+    "webSearch": "${ROUTER_DEFAULT}"
   }
 }
 EOF
