@@ -23,11 +23,14 @@ irm https://raw.githubusercontent.com/SamAISEO/GuijiAPI/main/install.ps1 | iex
 1. 获取 API Key：访问 [硅基API官网](https://api.guijiapi.net) 注册并获取 API Key
 2. 运行安装脚本
 3. 输入 API Key（输入时不显示）
-4. 选择默认模型：
-   - `claude-sonnet-4-6-20260218`（推荐，速度快）
-   - `claude-opus-4-6-20260205`（最强，较慢）
-   - `claude-sonnet-4-5-20250514`（稳定版本）
-   - 或手动输入其他模型名
+4. 选择模型供应商：
+   - 1) Anthropic（Claude 系列）
+   - 2) DeepSeek
+   - 3) ChatGLM（智谱）
+   - 4) Minimax
+   - 5) Moonshot（月之暗面）
+   - 6) Bailian（阿里云百炼）
+5. 选择该供应商下的具体模型
 
 ## 二、使用 Claude Code
 
@@ -98,14 +101,55 @@ echo $ANTHROPIC_BASE_URL
 
 ## 四、支持的模型
 
-硅基API 支持以下 Claude 模型：
+硅基API 支持以下 Claude Code 兼容模型：
+
+### Anthropic 系列
 
 | 模型名称 | 特点 |
 |---------|------|
-| claude-sonnet-4-6-20260218 | 推荐，速度快 |
-| claude-opus-4-6-20260205 | 最强，较慢 |
-| claude-sonnet-4-5-20250514 | 稳定版本 |
-| claude-3-5-sonnet-20241022 | 经典版本 |
+| claude-sonnet-4-6 | 推荐，速度快 |
+| claude-opus-4-7 | 最新最强，较慢 |
+| claude-opus-4-6 | 旗舰级 |
+| claude-opus-4-5-20251101 | 最新版本 |
+| claude-sonnet-4-5-20250929 | 稳定版本 |
+
+### DeepSeek 系列
+
+| 模型名称 | 特点 |
+|---------|------|
+| deepseek-v4-flash | 高性价比 |
+| deepseek-v4-pro | 高性能 |
+| deepseek-v3.2 | 稳定版本 |
+
+### ChatGLM 系列
+
+| 模型名称 | 特点 |
+|---------|------|
+| glm-5.1 | 最新版本 |
+| glm-5 | 高性能 |
+| glm-4.7 | 稳定版本 |
+
+### Minimax 系列
+
+| 模型名称 | 特点 |
+|---------|------|
+| MiniMax-M2.7 | 最新版本 |
+| MiniMax-M2.5 | 稳定版本 |
+
+### Moonshot 系列
+
+| 模型名称 | 特点 |
+|---------|------|
+| kimi-k2.5 | 最新版本 |
+| kimi-k2 | 稳定版本 |
+
+### Bailian 系列
+
+| 模型名称 | 特点 |
+|---------|------|
+| qwen3.6-max-preview | 最新版本 |
+| qwen3.6-plus | 高性能 |
+| qwen3.6 | 标准版本 |
 
 ---
 

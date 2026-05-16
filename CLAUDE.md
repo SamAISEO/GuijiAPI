@@ -27,12 +27,26 @@ Both scripts perform the same steps:
 
 ## Supported Models
 
-| Model | Notes |
-|-------|-------|
-| `claude-sonnet-4-6` | Recommended, fast |
-| `claude-opus-4-7` | Latest & most capable, slower |
-| `claude-opus-4-6` | Flagship |
-| `claude-sonnet-4-5-20250929` | Stable |
+| Model | Notes | Provider |
+|-------|-------|----------|
+| `claude-sonnet-4-6` | Recommended, fast | anthropic |
+| `claude-opus-4-7` | Latest & most capable, slower | anthropic |
+| `claude-opus-4-6` | Flagship | anthropic |
+| `claude-opus-4-5-20251101` | Latest version | anthropic |
+| `claude-sonnet-4-5-20250929` | Stable | anthropic |
+| `deepseek-v4-flash` | High性价比 | anthropic |
+| `deepseek-v4-pro` | High性能 | anthropic |
+| `deepseek-v3.2` | Stable | anthropic |
+| `glm-5.1` | ChatGLM latest | openai |
+| `glm-5` | ChatGLM高性能 | openai |
+| `glm-4.7` | ChatGLM稳定 | openai |
+| `MiniMax-M2.7` | Minimax最新 | openai |
+| `MiniMax-M2.5` | Minimax稳定 | openai |
+| `kimi-k2.5` | Moonshot最新 | openai |
+| `kimi-k2` | Moonshot稳定 | openai |
+| `qwen3.6-max-preview` | Bailian最新 | openai |
+| `qwen3.6-plus` | Bailian高性能 | openai |
+| `qwen3.6` | Bailian标准 | openai |
 
 ## Key Implementation Details
 
