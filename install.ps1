@@ -9,57 +9,23 @@ $API_BASE_URL = "https://api.guijiapi.net"
 $NODE_MIN_VER = "16.0.0"
 
 # ── 模型定义 ─────────────────────────────────────────────────
-# Anthropic 系列
+# Anthropic 系列（仅保留）
 $ANTHROPIC_MODELS = @(
     @{ name = "claude-opus-4-7"; desc = "最新最强，较慢" },
     @{ name = "claude-sonnet-4-6"; desc = "推荐，速度快" },
     @{ name = "claude-opus-4-6"; desc = "旗舰级" },
-    @{ name = "claude-opus-4-5-20251101"; desc = "最新版本" },
+    @{ name = "claude-opus-4-5-20251101"; desc = "高性能" },
     @{ name = "claude-sonnet-4-5-20250929"; desc = "稳定版本" }
 )
 
-# DeepSeek 系列
-$DEEPSEEK_MODELS = @(
-    @{ name = "deepseek-v4-flash"; desc = "高性价比" },
-    @{ name = "deepseek-v4-pro"; desc = "高性能" },
-    @{ name = "deepseek-v3.2"; desc = "稳定版本" }
-)
+# API 端点
+$API_ENDPOINT = "/v1/messages"
 
-# ChatGLM 系列
-$CHATGLM_MODELS = @(
-    @{ name = "glm-5.1"; desc = "最新版本" },
-    @{ name = "glm-5"; desc = "高性能" },
-    @{ name = "glm-4.7"; desc = "稳定版本" }
-)
-
-# Minimax 系列
-$MINIMAX_MODELS = @(
-    @{ name = "MiniMax-M2.7"; desc = "最新版本" },
-    @{ name = "MiniMax-M2.5"; desc = "稳定版本" }
-)
-
-# Moonshot 系列
-$MOONSHOT_MODELS = @(
-    @{ name = "kimi-k2.5"; desc = "最新版本" },
-    @{ name = "kimi-k2"; desc = "稳定版本" }
-)
-
-# Bailian 系列
-$BAILIAN_MODELS = @(
-    @{ name = "qwen3.6-max-preview"; desc = "最新版本" },
-    @{ name = "qwen3.6-plus"; desc = "高性能" },
-    @{ name = "qwen3.6"; desc = "标准版本" }
-)
-
-# Provider 定义
+# Provider 定义（仅 Anthropic）
 $PROVIDERS = @{
     "anthropic" = @{
-        api_base_url = "$API_BASE_URL/v1/messages"
+        api_base_url = "$API_BASE_URL$API_ENDPOINT"
         transformer = @{ use = @("Anthropic") }
-    }
-    "openai" = @{
-        api_base_url = "$API_BASE_URL/v1/chat/completions"
-        transformer = @{ use = @("OpenAI") }
     }
 }
 
@@ -392,45 +358,21 @@ if ($API_KEY -notmatch '^[A-Za-z0-9_-]{10,}$') {
 Write-Success "API Key 已设置"
 
 # ── 5. 选择模型 ──────────────────────────────────────────────
-Write-Step "选择模型供应商"
-Write-Host "  1) Anthropic（Claude 系列）" -ForegroundColor Cyan
-Write-Host "  2) DeepSeek" -ForegroundColor Cyan
-Write-Host "  3) ChatGLM（智谱）" -ForegroundColor Cyan
-Write-Host "  4) Minimax" -ForegroundColor Cyan
-Write-Host "  5) Moonshot（月之暗面）" -ForegroundColor Cyan
-Write-Host "  6) Bailian（阿里云百炼）" -ForegroundColor Cyan
-Write-Host ""
-
-$VENDOR_CHOICE = Read-Host "请选择供应商 (1/2/3/4/5/6，默认 1): "
-if ([string]::IsNullOrWhiteSpace($VENDOR_CHOICE)) { $VENDOR_CHOICE = "1" }
-
-# 根据供应商选择获取对应模型列表
-switch ($VENDOR_CHOICE) {
-    "1" { $SELECTED_MODELS = $ANTHROPIC_MODELS; $DEFAULT_PROVIDER = "anthropic"; $VENDOR_NAME = "Anthropic" }
-    "2" { $SELECTED_MODELS = $DEEPSEEK_MODELS; $DEFAULT_PROVIDER = "anthropic"; $VENDOR_NAME = "DeepSeek" }
-    "3" { $SELECTED_MODELS = $CHATGLM_MODELS; $DEFAULT_PROVIDER = "openai"; $VENDOR_NAME = "ChatGLM" }
-    "4" { $SELECTED_MODELS = $MINIMAX_MODELS; $DEFAULT_PROVIDER = "openai"; $VENDOR_NAME = "Minimax" }
-    "5" { $SELECTED_MODELS = $MOONSHOT_MODELS; $DEFAULT_PROVIDER = "openai"; $VENDOR_NAME = "Moonshot" }
-    "6" { $SELECTED_MODELS = $BAILIAN_MODELS; $DEFAULT_PROVIDER = "openai"; $VENDOR_NAME = "Bailian" }
-    default { $SELECTED_MODELS = $ANTHROPIC_MODELS; $DEFAULT_PROVIDER = "anthropic"; $VENDOR_NAME = "Anthropic" }
-}
-
-Write-Host ""
-Write-Step "选择 $VENDOR_NAME 模型"
-for ($i = 0; $i -lt $SELECTED_MODELS.Count; $i++) {
-    $model = $SELECTED_MODELS[$i]
+Write-Step "选择 Anthropic 模型"
+for ($i = 0; $i -lt $ANTHROPIC_MODELS.Count; $i++) {
+    $model = $ANTHROPIC_MODELS[$i]
     $marker = if ($i -eq 0) { "（推荐）" } else { "" }
     Write-Host "  $($i+1)) $($model.name) $($model.desc) $marker" -ForegroundColor Cyan
 }
 Write-Host ""
 
-$MODEL_INDEX = Read-Host "请选择 (1/$($SELECTED_MODELS.Count)，默认 1): "
+$MODEL_INDEX = Read-Host "请选择 (1/$($ANTHROPIC_MODELS.Count)，默认 1): "
 if ([string]::IsNullOrWhiteSpace($MODEL_INDEX)) { $MODEL_INDEX = "1" }
 $MODEL_INDEX = [int]$MODEL_INDEX - 1
-if ($MODEL_INDEX -lt 0 -or $MODEL_INDEX -ge $SELECTED_MODELS.Count) { $MODEL_INDEX = 0 }
+if ($MODEL_INDEX -lt 0 -or $MODEL_INDEX -ge $ANTHROPIC_MODELS.Count) { $MODEL_INDEX = 0 }
 
-$MODEL = $SELECTED_MODELS[$MODEL_INDEX].name
-Write-Success "已选择模型: $MODEL ($VENDOR_NAME)"
+$MODEL = $ANTHROPIC_MODELS[$MODEL_INDEX].name
+Write-Success "已选择模型: $MODEL"
 
 # ── 6. 生成 config.json ──────────────────────────────────────
 Write-Step "生成配置文件"
@@ -439,31 +381,18 @@ $CONFIG_DIR = "$env:USERPROFILE\.claude-code-router"
 $CONFIG_FILE = "$CONFIG_DIR\config.json"
 New-Item -ItemType Directory -Path $CONFIG_DIR -Force | Out-Null
 
-# 构建完整的 Providers 数组
-$allAnthropicModels = @($ANTHROPIC_MODELS.name) + @($DEEPSEEK_MODELS.name)
-$allOpenAIModels = @($CHATGLM_MODELS.name) + @($MINIMAX_MODELS.name) + @($MOONSHOT_MODELS.name) + @($BAILIAN_MODELS.name)
-
+# 构建 Providers 数组（仅 Anthropic）
 $providers = @(
     [ordered]@{
         name         = "anthropic"
         api_base_url = $PROVIDERS["anthropic"].api_base_url
         api_key      = $API_KEY
-        models       = [string[]]$allAnthropicModels
+        models       = [string[]]$ANTHROPIC_MODELS.name
         transformer  = $PROVIDERS["anthropic"].transformer
-    },
-    [ordered]@{
-        name         = "openai"
-        api_base_url = $PROVIDERS["openai"].api_base_url
-        api_key      = $API_KEY
-        models       = [string[]]$allOpenAIModels
-        transformer  = $PROVIDERS["openai"].transformer
     }
 )
 
 $routerDefault = "anthropic,$MODEL"
-if ($DEFAULT_PROVIDER -eq "openai") {
-    $routerDefault = "openai,$MODEL"
-}
 
 $config = [ordered]@{
     LOG            = $false
@@ -487,7 +416,7 @@ $config = [ordered]@{
 
 $config | ConvertTo-Json -Depth 10 | Set-Content -Path $CONFIG_FILE -Encoding UTF8
 Write-Success "配置文件已写入: $CONFIG_FILE"
-Write-Info "默认模型: $MODEL (provider: $DEFAULT_PROVIDER)"
+Write-Info "默认模型: $MODEL"
 
 # ── 7. 配置环境变量 ──────────────────────────────────────────
 Write-Step "配置环境变量"
@@ -549,6 +478,9 @@ $envHash['ANTHROPIC_BASE_URL'] = $API_BASE_URL
 $envHash.Remove('ANTHROPIC_AUTH_TOKEN')
 
 $settingsHash['env'] = $envHash
+
+# 写入选中的模型到顶层 model 字段，确保 `claude` 直连模式也能用到
+$settingsHash['model'] = $MODEL
 
 # 移除顶层认证字段
 foreach ($key in @('apiKey', 'authToken', 'sessionToken')) {
