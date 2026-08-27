@@ -460,7 +460,7 @@ if ($claudeModels.Count -gt 0) {
 if ($openaiModels.Count -gt 0) {
     $providers += [ordered]@{
         name         = "guiji-openai"
-        api_base_url = "$API_BASE_URL/v1/chat/completions"
+        api_base_url = "$API_BASE_URL/v1"
         api_key      = $API_KEY
         models       = [string[]]$openaiModels
         transformer  = @{ use = @("openai_chat_completions") }
