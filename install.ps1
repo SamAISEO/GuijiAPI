@@ -42,7 +42,7 @@ Write-Host ""
 Write-Host "╔══════════════════════════════════════════════════╗" -ForegroundColor Blue
 Write-Host "║   硅基API 2.0 - Claude Code 一键部署脚本         ║" -ForegroundColor Blue
 Write-Host "╠══════════════════════════════════════════════════╣" -ForegroundColor Blue
-Write-Host "║  本脚本由 硅基API (api.guiji.co) 提供           ║" -ForegroundColor Blue
+Write-Host "║  本脚本由 硅基API (api.guiji.co) 提供             ║" -ForegroundColor Blue
 Write-Host "║  使用专属 API 端点，无需自备 Anthropic 账号      ║" -ForegroundColor Blue
 Write-Host "╚══════════════════════════════════════════════════╝" -ForegroundColor Blue
 Write-Host ""
