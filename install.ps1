@@ -181,7 +181,7 @@ function Invoke-CleanupAuthConflict {
     Write-Warn "建议：执行 'claude /logout' 清除 OAuth 登录凭证"
     Write-Warn "       或让本脚本自动清理冲突配置"
 
-    $confirm = Read-Host "是否自动清理认证冲突？(Y/n，默认 Y): "
+    $confirm = Read-Host "是否自动清理认证冲突？(Y/n，默认 Y)"
     if ([string]::IsNullOrWhiteSpace($confirm)) { $confirm = "Y" }
     if ($confirm -match '^[Nn]') {
         Write-Warn "跳过清理，安装完成后请手动清理："
@@ -264,7 +264,7 @@ function Invoke-CleanupThirdParty {
     $oldUrl = Get-ExistingClaudeUrl
     Write-Warn "检测到第三方中转站配置: $(if ($oldUrl) { $oldUrl } else { '（未知）' })"
     Write-Warn "将删除旧的 Claude 配置目录和缓存文件，然后重建。"
-    $confirm = Read-Host "是否继续清理并重装？(Y/n，默认 Y): "
+    $confirm = Read-Host "是否继续清理并重装？(Y/n，默认 Y)"
     if ([string]::IsNullOrWhiteSpace($confirm)) { $confirm = "Y" }
     if ($confirm -match '^[Nn]') { Exit-WithError "用户取消，退出" }
 
@@ -355,7 +355,7 @@ $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "User") + ";" +
 Write-Step "API 配置"
 Write-Host "请在硅基API官网获取您的 API Key: $API_BASE_URL" -ForegroundColor Cyan
 
-$API_KEY = Read-Secret "请输入 API Key（输入时不显示）: "
+$API_KEY = Read-Secret "请输入 API Key（输入时不显示）"
 if ([string]::IsNullOrWhiteSpace($API_KEY)) {
     Exit-WithError "API Key 不能为空"
 }
@@ -374,7 +374,7 @@ for ($i = 0; $i -lt $ANTHROPIC_MODELS.Count; $i++) {
 }
 Write-Host ""
 
-$MODEL_INDEX = Read-Host "请选择 (1/$($ANTHROPIC_MODELS.Count)，默认 1): "
+$MODEL_INDEX = Read-Host "请选择 (1/$($ANTHROPIC_MODELS.Count)，默认 1)"
 if ([string]::IsNullOrWhiteSpace($MODEL_INDEX)) { $MODEL_INDEX = "1" }
 $MODEL_INDEX = [int]$MODEL_INDEX - 1
 if ($MODEL_INDEX -lt 0 -or $MODEL_INDEX -ge $ANTHROPIC_MODELS.Count) { $MODEL_INDEX = 0 }
