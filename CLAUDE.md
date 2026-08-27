@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This repository contains installation scripts for deploying Claude Code configured to use 硅基API (GuijiAPI) as the API provider instead of Anthropic directly. The project consists of two platform-specific one-liner installer scripts and a HTML guide.
 
-**API Provider:** `https://api.guijiapi.net`
+**API Provider:** `https://api.guiji.co`
 
 ## Repository Structure
 
@@ -22,7 +22,7 @@ Both scripts perform the same steps:
 2. Install/update `@anthropic-ai/claude-code` and `claude-code-router` via npm globally
 3. Prompt user for their GuijiAPI key (masked input)
 4. Let user select a model (or enter custom)
-5. Write `ANTHROPIC_API_KEY` and `ANTHROPIC_BASE_URL=https://api.guijiapi.net` to shell profile (`.bashrc`/`.zshrc`) or Windows user environment
+5. Write `ANTHROPIC_API_KEY` and `ANTHROPIC_BASE_URL=https://api.guiji.co` to shell profile (`.bashrc`/`.zshrc`) or Windows user environment
 6. Configure `claude-code-router` (`~/.claude-code-router/config.json` or `%USERPROFILE%\.claude-code-router\config.json`)
 
 ## Supported Models
@@ -52,7 +52,7 @@ Both scripts perform the same steps:
 
 **URL normalization:** Both scripts normalize API base URLs by stripping trailing slashes, `/v1`, and `/v1/messages` suffixes before comparison. This prevents duplicate configuration when the user's existing env already points to the same host.
 
-**Idempotency:** Scripts skip re-installing npm packages already at latest version, and skip re-writing environment variables if they already point to an official URL (`api.guijiapi.net` or `api.anthropic.com`).
+**Idempotency:** Scripts skip re-installing npm packages already at latest version, and skip re-writing environment variables if they already point to an official URL (`api.guiji.co` or `api.anthropic.com`).
 
 **Pipe-compatibility:** `install.sh` reads all interactive input from `/dev/tty` (not stdin) so it works when piped from `curl`.
 

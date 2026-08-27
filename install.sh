@@ -6,7 +6,7 @@
 
 set -e
 
-API_BASE_URL="https://api.guijiapi.net"
+API_BASE_URL="https://api.guiji.co"
 NODE_MIN_VER="16.0.0"
 
 # ── 模型定义 ─────────────────────────────────────────────────
@@ -31,9 +31,9 @@ skip()    { echo -e "${GREEN}[跳过]${NC}  $*"; }
 # ── Banner ───────────────────────────────────────────────────
 echo ""
 echo -e "${BOLD}${BLUE}╔══════════════════════════════════════════════════╗${NC}"
-echo -e "${BOLD}${BLUE}║     硅基API - Claude Code 一键部署脚本           ║${NC}"
+echo -e "${BOLD}${BLUE}║   硅基API 2.0 - Claude Code 一键部署脚本         ║${NC}"
 echo -e "${BOLD}${BLUE}╠══════════════════════════════════════════════════╣${NC}"
-echo -e "${BOLD}${BLUE}║  本脚本由 硅基API (api.guijiapi.net) 提供        ║${NC}"
+echo -e "${BOLD}${BLUE}║  本脚本由 硅基API (api.guiji.co) 提供           ║${NC}"
 echo -e "${BOLD}${BLUE}║  使用专属 API 端点，无需自备 Anthropic 账号      ║${NC}"
 echo -e "${BOLD}${BLUE}╚══════════════════════════════════════════════════╝${NC}"
 echo ""

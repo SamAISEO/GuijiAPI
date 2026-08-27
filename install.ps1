@@ -1,11 +1,11 @@
-# ============================================================
-#  硅基API - Claude Code 一键部署脚本 (Windows PowerShell)
+﻿# ============================================================
+#  硅基API 2.0 - Claude Code 一键部署脚本 (Windows PowerShell)
 #  用法: irm https://raw.githubusercontent.com/SamAISEO/GuijiAPI/main/install.ps1 | iex
 # ============================================================
 
 $ErrorActionPreference = "Stop"
 
-$API_BASE_URL = "https://api.guijiapi.net"
+$API_BASE_URL = "https://api.guiji.co"
 $NODE_MIN_VER = "16.0.0"
 
 # ── 模型定义 ─────────────────────────────────────────────────
@@ -40,9 +40,9 @@ function Exit-WithError($msg) { Write-Host "[ERROR] $msg" -ForegroundColor Red; 
 # ── Banner ───────────────────────────────────────────────────
 Write-Host ""
 Write-Host "╔══════════════════════════════════════════════════╗" -ForegroundColor Blue
-Write-Host "║     硅基API - Claude Code 一键部署脚本           ║" -ForegroundColor Blue
+Write-Host "║   硅基API 2.0 - Claude Code 一键部署脚本         ║" -ForegroundColor Blue
 Write-Host "╠══════════════════════════════════════════════════╣" -ForegroundColor Blue
-Write-Host "║  本脚本由 硅基API (api.guijiapi.net) 提供        ║" -ForegroundColor Blue
+Write-Host "║  本脚本由 硅基API (api.guiji.co) 提供           ║" -ForegroundColor Blue
 Write-Host "║  使用专属 API 端点，无需自备 Anthropic 账号      ║" -ForegroundColor Blue
 Write-Host "╚══════════════════════════════════════════════════╝" -ForegroundColor Blue
 Write-Host ""

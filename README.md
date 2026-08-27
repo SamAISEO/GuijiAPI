@@ -41,7 +41,7 @@ npm install -g @anthropic-ai/claude-code
 
 ### 安装步骤说明
 
-1. 获取 API Key：访问 [硅基API官网](https://api.guijiapi.net) 注册并获取 API Key
+1. 获取 API Key：访问 [硅基API官网](https://api.guiji.co) 注册并获取 API Key
 2. 运行安装脚本
 3. 输入 API Key（输入时不显示）
 4. 选择模型供应商：
@@ -105,7 +105,7 @@ echo $ANTHROPIC_BASE_URL
 
 应显示：
 - `ANTHROPIC_API_KEY`: 你的 API Key（前10位）
-- `ANTHROPIC_BASE_URL`: `https://api.guijiapi.net`
+- `ANTHROPIC_BASE_URL`: `https://api.guiji.co`
 
 ### Q: 如何更换模型？
 
@@ -176,4 +176,4 @@ echo $ANTHROPIC_BASE_URL
 
 **硅基API** - 提供高质量的AI接口服务，安全稳定、低延迟、高并发的企业级解决方案。
 
-官网：https://api.guijiapi.net
+官网：https://api.guiji.co
