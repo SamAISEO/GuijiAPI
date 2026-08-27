@@ -463,7 +463,7 @@ if ($openaiModels.Count -gt 0) {
         api_base_url = "$API_BASE_URL/v1/chat/completions"
         api_key      = $API_KEY
         models       = [string[]]$openaiModels
-        transformer  = @{ use = @("OpenAI") }
+        transformer  = @{ use = @("openai_chat_completions") }
     }
 }
 
