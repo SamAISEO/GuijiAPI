@@ -882,12 +882,15 @@ GLOBAL_BIN=$(get_npm_global_bin)
 echo ""
 echo -e "${GREEN}${BOLD}✅ Claude Code 部署完成！${NC}"
 echo ""
+echo -e "${YELLOW}${BOLD}⚠ 重要：请重新打开终端窗口，或执行以下命令使环境变量生效：${NC}"
+echo -e "  ${CYAN}source ${ENV_RC}${NC}"
+echo ""
 echo -e "${CYAN}使用方法:${NC}"
 echo "  claude            # 启动 Claude Code"
 echo ""
 echo -e "${CYAN}说明:${NC}"
 echo "  已写入 ${ENV_RC}，并同步到 ~/.claude/settings.json。"
-echo "  如果直接运行 claude 仍提示未登录，请先执行: source ${ENV_RC}"
+echo "  如果直接运行 claude 仍连接 api.anthropic.com，请先执行: source ${ENV_RC}"
 echo ""
 
 # 检查 PATH
