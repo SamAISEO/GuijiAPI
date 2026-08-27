@@ -123,20 +123,16 @@ function Get-AvailableModels {
         }
         $response = Invoke-RestMethod -Uri "$API_BASE_URL/v1/models" -Headers $headers -Method Get -TimeoutSec 15
         $models = @()
-        # 排除非对话模型（图像生成、语音、视频、embedding、reranker等）
-        $nonChatPattern = '^(dall-e|flux|kling-image|kling-video|kling-avatar|kling-audio|kling-effects|kling-motion|kling-multi|kling-omni|kling-custom|kling-advanced|kling-extend|mj_|pixverse|qwen-image|qwen-vl|qwen-tts|qwen-rerank|suno|speech|tts|whisper|audio|veo|vidu|wan2|wan-image|happyhorse|z-image|bge|embedding|reranker|netease-youdao|MiniMax-Voice|MiniMax-Hailuo|MiniMax-File|qvq|text-|claude-instant|ping$)'
         if ($response.data) {
             foreach ($m in $response.data) {
                 $modelId = if ($m.id) { $m.id } elseif ($m.name) { $m.name } else { $null }
-                if ($modelId -and $modelId -notmatch $nonChatPattern) {
+                # 只保留 claude- 开头的对话模型
+                if ($modelId -and $modelId -match '^claude-' -and $modelId -notmatch 'instant|ping') {
                     $models += $modelId
                 }
             }
         }
-        # claude- 系列排前面，其余按字母排序
-        $claudeModels = $models | Where-Object { $_ -match '^claude-' } | Sort-Object
-        $otherModels = $models | Where-Object { $_ -notmatch '^claude-' } | Sort-Object
-        return @($claudeModels + $otherModels)
+        return @($models | Sort-Object)
     } catch {
         Write-Warn "动态拉取模型列表失败: $($_.Exception.Message)"
         return $null
@@ -394,24 +390,38 @@ if ($API_KEY -notmatch '^[A-Za-z0-9_-]{10,}$') {
 }
 Write-Success "API Key 已设置"
 
-# ── 5. 选择默认模型 ──────────────────────────────────────────
-Write-Step "选择默认模型"
+# ── 5. 动态拉取 Anthropic 模型列表并选择默认模型 ─────────────
+Write-Step "拉取最新 Anthropic 模型列表"
+
+$ALL_MODELS = $null
+$fetchedModels = Get-AvailableModels -ApiKey $API_KEY
+if ($fetchedModels -and $fetchedModels.Count -gt 0) {
+    # 只保留 claude- 开头的模型
+    $claudeModels = @($fetchedModels | Where-Object { $_ -match '^claude-' })
+    if ($claudeModels.Count -gt 0) {
+        $ALL_MODELS = $claudeModels
+        Write-Success "成功拉取 $($claudeModels.Count) 个 Anthropic 模型（实时更新）"
+    }
+}
+
+if (-not $ALL_MODELS -or $ALL_MODELS.Count -eq 0) {
+    Write-Warn "动态拉取失败，使用内置模型列表"
+    $ALL_MODELS = @($ANTHROPIC_MODELS.name)
+}
 
 Write-Host ""
-for ($i = 0; $i -lt $ANTHROPIC_MODELS.Count; $i++) {
-    $model = $ANTHROPIC_MODELS[$i]
+for ($i = 0; $i -lt $ALL_MODELS.Count; $i++) {
     $marker = if ($i -eq 0) { "（推荐）" } else { "" }
-    Write-Host "  $($i+1)) $($model.name) $($model.desc) $marker" -ForegroundColor Cyan
+    Write-Host "  $($i+1)) $($ALL_MODELS[$i]) $marker" -ForegroundColor Cyan
 }
 Write-Host ""
 
-$MODEL_INDEX = Read-Host "请选择 (1/$($ANTHROPIC_MODELS.Count)，默认 1)"
+$MODEL_INDEX = Read-Host "请选择默认模型 (1/$($ALL_MODELS.Count)，默认 1)"
 if ([string]::IsNullOrWhiteSpace($MODEL_INDEX)) { $MODEL_INDEX = "1" }
 $MODEL_INDEX = [int]$MODEL_INDEX - 1
-if ($MODEL_INDEX -lt 0 -or $MODEL_INDEX -ge $ANTHROPIC_MODELS.Count) { $MODEL_INDEX = 0 }
+if ($MODEL_INDEX -lt 0 -or $MODEL_INDEX -ge $ALL_MODELS.Count) { $MODEL_INDEX = 0 }
 
-$MODEL = $ANTHROPIC_MODELS[$MODEL_INDEX].name
-$ALL_MODELS = @($ANTHROPIC_MODELS.name)
+$MODEL = $ALL_MODELS[$MODEL_INDEX]
 
 Write-Success "已选择默认模型: $MODEL"
 Write-Info "共配置 $($ALL_MODELS.Count) 个模型，可在 Claude Code 中随时切换"
