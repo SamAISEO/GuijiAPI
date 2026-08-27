@@ -114,6 +114,33 @@ function Install-Or-SkipNpmPkg($pkg, $display) {
     }
 }
 
+function Get-AvailableModels {
+    param([string]$ApiKey)
+    try {
+        $headers = @{
+            "x-api-key" = $ApiKey
+            "anthropic-version" = "2023-06-01"
+        }
+        $response = Invoke-RestMethod -Uri "$API_BASE_URL/v1/models" -Headers $headers -Method Get -TimeoutSec 15
+        $models = @()
+        if ($response.data) {
+            foreach ($m in $response.data) {
+                $modelId = if ($m.id) { $m.id } elseif ($m.name) { $m.name } else { $null }
+                if ($modelId -and $modelId -notmatch '^(text-|claude-instant|ping$)') {
+                    $models += $modelId
+                }
+            }
+        }
+        # claude- 系列排前面，其余按字母排序
+        $claudeModels = $models | Where-Object { $_ -match '^claude-' } | Sort-Object
+        $otherModels = $models | Where-Object { $_ -notmatch '^claude-' } | Sort-Object
+        return @($claudeModels + $otherModels)
+    } catch {
+        Write-Warn "动态拉取模型列表失败: $($_.Exception.Message)"
+        return $null
+    }
+}
+
 function Test-NodeVersion {
     if (Get-Command node -ErrorAction SilentlyContinue) {
         $ver = (node --version).TrimStart('v')
@@ -365,22 +392,47 @@ if ($API_KEY -notmatch '^[A-Za-z0-9_-]{10,}$') {
 }
 Write-Success "API Key 已设置"
 
-# ── 5. 选择模型 ──────────────────────────────────────────────
-Write-Step "选择 Anthropic 模型"
-for ($i = 0; $i -lt $ANTHROPIC_MODELS.Count; $i++) {
-    $model = $ANTHROPIC_MODELS[$i]
-    $marker = if ($i -eq 0) { "（推荐）" } else { "" }
-    Write-Host "  $($i+1)) $($model.name) $($model.desc) $marker" -ForegroundColor Cyan
+# ── 5. 动态拉取模型列表并选择默认模型 ─────────────────────────
+Write-Step "拉取可用模型列表"
+
+$ALL_MODELS = Get-AvailableModels -ApiKey $API_KEY
+
+if ($ALL_MODELS -and $ALL_MODELS.Count -gt 0) {
+    Write-Success "成功拉取 $($ALL_MODELS.Count) 个可用模型（claude 系列优先显示）"
+    Write-Host ""
+    for ($i = 0; $i -lt $ALL_MODELS.Count; $i++) {
+        $marker = if ($i -eq 0) { "（推荐默认）" } else { "" }
+        Write-Host "  $($i+1).ToString().PadLeft(3)) $($ALL_MODELS[$i]) $marker" -ForegroundColor Cyan
+    }
+    Write-Host ""
+
+    $MODEL_INDEX = Read-Host "请选择默认模型编号 (1-$($ALL_MODELS.Count)，默认 1)"
+    if ([string]::IsNullOrWhiteSpace($MODEL_INDEX)) { $MODEL_INDEX = "1" }
+    $MODEL_INDEX = [int]$MODEL_INDEX - 1
+    if ($MODEL_INDEX -lt 0 -or $MODEL_INDEX -ge $ALL_MODELS.Count) { $MODEL_INDEX = 0 }
+
+    $MODEL = $ALL_MODELS[$MODEL_INDEX]
+} else {
+    Write-Warn "动态拉取失败，使用内置模型列表"
+    Write-Host ""
+    for ($i = 0; $i -lt $ANTHROPIC_MODELS.Count; $i++) {
+        $model = $ANTHROPIC_MODELS[$i]
+        $marker = if ($i -eq 0) { "（推荐）" } else { "" }
+        Write-Host "  $($i+1)) $($model.name) $($model.desc) $marker" -ForegroundColor Cyan
+    }
+    Write-Host ""
+
+    $MODEL_INDEX = Read-Host "请选择 (1/$($ANTHROPIC_MODELS.Count)，默认 1)"
+    if ([string]::IsNullOrWhiteSpace($MODEL_INDEX)) { $MODEL_INDEX = "1" }
+    $MODEL_INDEX = [int]$MODEL_INDEX - 1
+    if ($MODEL_INDEX -lt 0 -or $MODEL_INDEX -ge $ANTHROPIC_MODELS.Count) { $MODEL_INDEX = 0 }
+
+    $MODEL = $ANTHROPIC_MODELS[$MODEL_INDEX].name
+    $ALL_MODELS = @($ANTHROPIC_MODELS.name)
 }
-Write-Host ""
 
-$MODEL_INDEX = Read-Host "请选择 (1/$($ANTHROPIC_MODELS.Count)，默认 1)"
-if ([string]::IsNullOrWhiteSpace($MODEL_INDEX)) { $MODEL_INDEX = "1" }
-$MODEL_INDEX = [int]$MODEL_INDEX - 1
-if ($MODEL_INDEX -lt 0 -or $MODEL_INDEX -ge $ANTHROPIC_MODELS.Count) { $MODEL_INDEX = 0 }
-
-$MODEL = $ANTHROPIC_MODELS[$MODEL_INDEX].name
-Write-Success "已选择模型: $MODEL"
+Write-Success "已选择默认模型: $MODEL"
+Write-Info "共配置 $($ALL_MODELS.Count) 个模型，可在 Claude Code 中随时切换"
 
 # ── 6. 生成 config.json ──────────────────────────────────────
 Write-Step "生成配置文件"
@@ -389,18 +441,18 @@ $CONFIG_DIR = "$env:USERPROFILE\.claude-code-router"
 $CONFIG_FILE = "$CONFIG_DIR\config.json"
 New-Item -ItemType Directory -Path $CONFIG_DIR -Force | Out-Null
 
-# 构建 Providers 数组（仅 Anthropic）
+# 构建 Providers 数组（统一使用硅基API端点，所有模型共用一个 Provider）
 $providers = @(
     [ordered]@{
-        name         = "anthropic"
+        name         = "guijiapi"
         api_base_url = $PROVIDERS["anthropic"].api_base_url
         api_key      = $API_KEY
-        models       = [string[]]$ANTHROPIC_MODELS.name
+        models       = [string[]]$ALL_MODELS
         transformer  = $PROVIDERS["anthropic"].transformer
     }
 )
 
-$routerDefault = "anthropic,$MODEL"
+$routerDefault = "guijiapi,$MODEL"
 
 $config = [ordered]@{
     LOG            = $false
