@@ -4,16 +4,37 @@
 
 给大家准备了一个一键安装脚本，大家可以用以下命令来一键安装 Claude Code 并配置好硅基API。
 
-### Linux / MacOS
+### 硅基API 一键配置安装（推荐）
+
+自动安装 Claude Code 并配置好硅基API专用 endpoint：
 
 ```bash
+# Linux / MacOS
 curl -fsSL https://raw.githubusercontent.com/SamAISEO/GuijiAPI/main/install.sh | bash
+
+# Windows PowerShell
+irm https://raw.githubusercontent.com/SamAISEO/GuijiAPI/main/install.ps1 | iex
 ```
 
-### Windows PowerShell
+### 仅安装 Claude Code（不含硅基API配置）
 
-```powershell
-irm https://raw.githubusercontent.com/SamAISEO/GuijiAPI/main/install.ps1 | iex
+如果您只需要标准版 Claude Code（使用官方 Anthropic API），可以使用官方安装命令：
+
+```bash
+# Linux / MacOS
+curl -fsSL https://claude.ai/install.sh | bash
+
+# Windows
+irm https://claude.ai/install.ps1 | iex
+
+# Homebrew (MacOS/Linux)
+brew install --cask claude-code
+
+# WinGet (Windows)
+winget install Anthropic.ClaudeCode
+
+# NPM (已弃用)
+npm install -g @anthropic-ai/claude-code
 ```
 
 复制上面的脚本命令到命令行窗口，按回车键运行，运行后根据指引输入你在硅基API平台创建的 API KEY 并选择相应模型即可。
