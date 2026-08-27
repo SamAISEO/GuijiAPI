@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 #  硅基API 2.0 - Claude Code 一键部署脚本 (Windows PowerShell)
 #  用法: irm https://raw.githubusercontent.com/SamAISEO/GuijiAPI/main/install.ps1 | iex
 # ============================================================
@@ -89,20 +89,28 @@ function Get-LatestNpmVersion($pkg) {
 
 function Install-Or-SkipNpmPkg($pkg, $display) {
     $installed = Get-InstalledNpmVersion $pkg
-    if (-not $installed) {
-        Write-Info "安装 $display..."
-        npm install -g $pkg 2>&1 | Select-Object -Last 3
-        Write-Success "$display 安装完成"
-    } else {
-        Write-Info "检查 $display 最新版本..."
-        $latest = Get-LatestNpmVersion $pkg
-        if ($latest -and $installed -eq $latest) {
-            Write-Skip "$display $installed 已是最新版本"
-        } else {
-            Write-Info "$display $installed → $latest，升级中..."
+    $oldEAP = $ErrorActionPreference
+    $ErrorActionPreference = "Continue"
+    try {
+        if (-not $installed) {
+            Write-Info "安装 $display..."
             npm install -g $pkg 2>&1 | Select-Object -Last 3
-            Write-Success "$display 升级完成"
+            if ($LASTEXITCODE -ne 0) { throw "$display 安装失败 (exit code $LASTEXITCODE)" }
+            Write-Success "$display 安装完成"
+        } else {
+            Write-Info "检查 $display 最新版本..."
+            $latest = Get-LatestNpmVersion $pkg
+            if ($latest -and $installed -eq $latest) {
+                Write-Skip "$display $installed 已是最新版本"
+            } else {
+                Write-Info "$display $installed → $latest，升级中..."
+                npm install -g $pkg 2>&1 | Select-Object -Last 3
+                if ($LASTEXITCODE -ne 0) { throw "$display 升级失败 (exit code $LASTEXITCODE)" }
+                Write-Success "$display 升级完成"
+            }
         }
+    } finally {
+        $ErrorActionPreference = $oldEAP
     }
 }
 
