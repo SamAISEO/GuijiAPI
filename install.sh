@@ -854,6 +854,26 @@ fi
 # 限制访问权限，防止 API Key 泄露
 chmod 600 "$CLAUDE_JSON"
 
+# 强制验证并确保 hasCompletedOnboarding 为 true（防止被 Claude Code 重置）
+if command -v python3 &>/dev/null; then
+  python3 - "$CLAUDE_JSON" "$CLAUDE_VERSION" "$API_KEY" <<'PYEOF'
+import json, sys
+path, ver, api_key = sys.argv[1], sys.argv[2], sys.argv[3]
+try:
+    with open(path) as f:
+        d = json.load(f)
+except Exception:
+    d = {}
+d['hasCompletedOnboarding'] = True
+d['lastOnboardingVersion'] = ver
+d['primaryApiKey'] = api_key
+for k in ['apiBaseUrl', 'oauthAccount', 'authToken', 'sessionToken']:
+    d.pop(k, None)
+with open(path, 'w') as f:
+    json.dump(d, f, indent=2)
+PYEOF
+fi
+
 # ── 9. API 连通性验证 ─────────────────────────────────────────
 step "验证 API 连通性"
 
