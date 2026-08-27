@@ -123,10 +123,12 @@ function Get-AvailableModels {
         }
         $response = Invoke-RestMethod -Uri "$API_BASE_URL/v1/models" -Headers $headers -Method Get -TimeoutSec 15
         $models = @()
+        # 排除非对话模型（图像生成、语音、视频、embedding、reranker等）
+        $nonChatPattern = '^(dall-e|flux|kling-image|kling-video|kling-avatar|kling-audio|kling-effects|kling-motion|kling-multi|kling-omni|kling-custom|kling-advanced|kling-extend|mj_|pixverse|qwen-image|qwen-vl|qwen-tts|qwen-rerank|suno|speech|tts|whisper|audio|veo|vidu|wan2|wan-image|happyhorse|z-image|bge|embedding|reranker|netease-youdao|MiniMax-Voice|MiniMax-Hailuo|MiniMax-File|qvq|text-|claude-instant|ping$)'
         if ($response.data) {
             foreach ($m in $response.data) {
                 $modelId = if ($m.id) { $m.id } elseif ($m.name) { $m.name } else { $null }
-                if ($modelId -and $modelId -notmatch '^(text-|claude-instant|ping$)') {
+                if ($modelId -and $modelId -notmatch $nonChatPattern) {
                     $models += $modelId
                 }
             }
@@ -441,18 +443,33 @@ $CONFIG_DIR = "$env:USERPROFILE\.claude-code-router"
 $CONFIG_FILE = "$CONFIG_DIR\config.json"
 New-Item -ItemType Directory -Path $CONFIG_DIR -Force | Out-Null
 
-# 构建 Providers 数组（统一使用硅基API端点，所有模型共用一个 Provider）
-$providers = @(
-    [ordered]@{
-        name         = "guijiapi"
-        api_base_url = $PROVIDERS["anthropic"].api_base_url
-        api_key      = $API_KEY
-        models       = [string[]]$ALL_MODELS
-        transformer  = $PROVIDERS["anthropic"].transformer
-    }
-)
+# 构建 Providers 数组：claude- 模型走 Anthropic 格式，其他对话模型走 OpenAI 兼容格式
+$claudeModels = @($ALL_MODELS | Where-Object { $_ -match '^claude-' })
+$openaiModels = @($ALL_MODELS | Where-Object { $_ -notmatch '^claude-' })
 
-$routerDefault = "guijiapi,$MODEL"
+$providers = @()
+if ($claudeModels.Count -gt 0) {
+    $providers += [ordered]@{
+        name         = "guiji-anthropic"
+        api_base_url = "$API_BASE_URL/v1/messages"
+        api_key      = $API_KEY
+        models       = [string[]]$claudeModels
+        transformer  = @{ use = @("Anthropic") }
+    }
+}
+if ($openaiModels.Count -gt 0) {
+    $providers += [ordered]@{
+        name         = "guiji-openai"
+        api_base_url = "$API_BASE_URL/v1/chat/completions"
+        api_key      = $API_KEY
+        models       = [string[]]$openaiModels
+        transformer  = @{ use = @("OpenAI") }
+    }
+}
+
+# 根据用户选择的模型确定默认 Provider
+$defaultProvider = if ($MODEL -match '^claude-') { "guiji-anthropic" } else { "guiji-openai" }
+$routerDefault = "$defaultProvider,$MODEL"
 
 $config = [ordered]@{
     LOG            = $false
