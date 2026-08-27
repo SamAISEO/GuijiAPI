@@ -10,9 +10,9 @@ API_BASE_URL="https://api.guiji.co"
 NODE_MIN_VER="16.0.0"
 
 # ── 模型定义 ─────────────────────────────────────────────────
-# Anthropic 系列（仅保留）
-ANTHROPIC_MODELS=("claude-opus-4-7" "claude-sonnet-4-6" "claude-opus-4-6" "claude-opus-4-5-20251101" "claude-sonnet-4-5-20250929")
-ANTHROPIC_DESCS=("最新最强，较慢" "推荐，速度快" "旗舰级" "高性能" "稳定版本")
+# Anthropic 系列
+ANTHROPIC_MODELS=("claude-sonnet-5" "claude-opus-5" "claude-fable-5" "claude-opus-4-8" "claude-sonnet-4-6")
+ANTHROPIC_DESCS=("推荐，速度快，性价比高" "最新最强" "高性能，长上下文" "稳定旗舰" "旧版稳定")
 
 # API 端点
 API_ENDPOINT="/v1/messages"

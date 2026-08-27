@@ -9,13 +9,13 @@ $API_BASE_URL = "https://api.guiji.co"
 $NODE_MIN_VER = "16.0.0"
 
 # ── 模型定义 ─────────────────────────────────────────────────
-# Anthropic 系列（仅保留）
+# Anthropic 系列
 $ANTHROPIC_MODELS = @(
-    @{ name = "claude-opus-4-7"; desc = "最新最强，较慢" },
-    @{ name = "claude-sonnet-4-6"; desc = "推荐，速度快" },
-    @{ name = "claude-opus-4-6"; desc = "旗舰级" },
-    @{ name = "claude-opus-4-5-20251101"; desc = "高性能" },
-    @{ name = "claude-sonnet-4-5-20250929"; desc = "稳定版本" }
+    @{ name = "claude-sonnet-5"; desc = "推荐，速度快，性价比高" },
+    @{ name = "claude-opus-5"; desc = "最新最强" },
+    @{ name = "claude-fable-5"; desc = "高性能，长上下文" },
+    @{ name = "claude-opus-4-8"; desc = "稳定旗舰" },
+    @{ name = "claude-sonnet-4-6"; desc = "旧版稳定" }
 )
 
 # API 端点
