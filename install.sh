@@ -91,6 +91,35 @@ normalize_base_url() {
   printf '%s\n' "${url%/}"
 }
 
+# 动态拉取 Anthropic 模型列表（输出每行一个模型名）
+get_available_models() {
+  local api_key="$1"
+  local response
+  response=$(curl -fsSL -m 15 \
+    -H "x-api-key: $api_key" \
+    -H "anthropic-version: 2023-06-01" \
+    "$API_BASE_URL/v1/models" 2>/dev/null) || return 1
+
+  # 用 python3 或 grep/sed 解析 JSON，提取 claude- 开头的模型
+  if command -v python3 &>/dev/null; then
+    printf '%s' "$response" | python3 -c "
+import json, sys
+data = json.load(sys.stdin)
+models = []
+for m in data.get('data', []):
+    mid = m.get('id') or m.get('name')
+    if mid and mid.startswith('claude-') and 'instant' not in mid and mid != 'ping':
+        models.append(mid)
+models.sort()
+for m in models:
+    print(m)
+" 2>/dev/null
+  else
+    # 回退：用 grep/sed 简单解析（可能不完美，但能工作）
+    printf '%s' "$response" | grep -oE '"id"[[:space:]]*:[[:space:]]*"claude-[^"]+"' | sed -E 's/.*"claude-/claude-/' | sed 's/"$//' | grep -v 'instant\|ping' | sort -u
+  fi
+}
+
 # 检测认证冲突：ANTHROPIC_AUTH_TOKEN 环境变量或 OAuth 登录凭证
 has_auth_conflict() {
   # 检查环境变量
@@ -503,27 +532,44 @@ if ! printf '%s' "$API_KEY" | grep -qE '^[A-Za-z0-9_-]{10,}$'; then
 fi
 success "API Key 已设置"
 
-# ── 5. 选择模型 ──────────────────────────────────────────────
-step "选择 Anthropic 模型"
+# ── 5. 动态拉取 Anthropic 模型列表并选择默认模型 ─────────────
+step "拉取最新 Anthropic 模型列表"
 
-step "选择 Anthropic 模型"
-MODEL_COUNT=${#ANTHROPIC_MODELS[@]}
+ALL_MODELS=()
+FETCHED_MODELS=$(get_available_models "$API_KEY" || true)
+if [ -n "$FETCHED_MODELS" ]; then
+  # 读取每行一个模型到数组
+  while IFS= read -r line; do
+    [ -n "$line" ] && ALL_MODELS+=("$line")
+  done <<< "$FETCHED_MODELS"
+fi
+
+if [ ${#ALL_MODELS[@]} -gt 0 ]; then
+  success "成功拉取 ${#ALL_MODELS[@]} 个 Anthropic 模型（实时更新）"
+else
+  warn "动态拉取失败，使用内置模型列表"
+  ALL_MODELS=("${ANTHROPIC_MODELS[@]}")
+fi
+
+echo ""
+MODEL_COUNT=${#ALL_MODELS[@]}
 for i in $(seq 0 $((MODEL_COUNT - 1))); do
   marker=""
   if [ $i -eq 0 ]; then marker="（推荐）"; fi
-  echo -e "${CYAN}  $((i+1))) ${ANTHROPIC_MODELS[$i]} ${ANTHROPIC_DESCS[$i]} $marker${NC}"
+  echo -e "${CYAN}  $((i+1))) ${ALL_MODELS[$i]} $marker${NC}"
 done
 echo ""
 
-MODEL_CHOICE=$(read_input "请选择 (1/$MODEL_COUNT，默认 1): ")
+MODEL_CHOICE=$(read_input "请选择默认模型 (1/$MODEL_COUNT，默认 1): ")
 MODEL_CHOICE="${MODEL_CHOICE:-1}"
 MODEL_INDEX=$((MODEL_CHOICE - 1))
 if [ "$MODEL_INDEX" -lt 0 ] || [ "$MODEL_INDEX" -ge "$MODEL_COUNT" ]; then
   MODEL_INDEX=0
 fi
 
-MODEL="${ANTHROPIC_MODELS[$MODEL_INDEX]}"
-success "已选择模型: $MODEL"
+MODEL="${ALL_MODELS[$MODEL_INDEX]}"
+success "已选择默认模型: $MODEL"
+echo -e "${CYAN}[INFO]${NC}  共配置 ${#ALL_MODELS[@]} 个模型，可在 Claude Code 中随时切换"
 
 # ── 6. 生成 config.json ──────────────────────────────────────
 step "生成配置文件"
@@ -554,7 +600,7 @@ if [ "$SKIP_CONFIG" != "true" ]; then
 
   # 使用 python3 生成 JSON（更可靠）
   if command -v python3 &>/dev/null; then
-    python3 - "$CONFIG_FILE" "$API_BASE_URL_WITH_ENDPOINT" "$API_KEY" "${ANTHROPIC_MODELS[@]}" "$ROUTER_DEFAULT" <<'PYEOF'
+    python3 - "$CONFIG_FILE" "$API_BASE_URL_WITH_ENDPOINT" "$API_KEY" "${ALL_MODELS[@]}" "$ROUTER_DEFAULT" <<'PYEOF'
 import json, sys
 path, api_base_url, api_key = sys.argv[1:4]
 router_default = sys.argv[4]
@@ -608,7 +654,7 @@ PYEOF
       "name": "anthropic",
       "api_base_url": "${API_BASE_URL_WITH_ENDPOINT}",
       "api_key": "${API_KEY}",
-      "models": ["$(IFS=, && echo "${ANTHROPIC_MODELS[*]}")"],
+      "models": ["$(IFS=, && echo "${ALL_MODELS[*]}")"],
       "transformer": { "use": ["Anthropic"] }
     }
   ],
