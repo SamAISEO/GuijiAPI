@@ -1,4 +1,4 @@
-# ============================================================
+﻿# ============================================================
 #  硅基API 2.0 - Claude Code 一键部署脚本 (Windows PowerShell)
 #  用法: irm https://raw.githubusercontent.com/SamAISEO/GuijiAPI/main/install.ps1 | iex
 # ============================================================
@@ -36,6 +36,14 @@ function Write-Warn($msg)    { Write-Host "[WARN]  $msg" -ForegroundColor Yellow
 function Write-Step($msg)    { Write-Host ""; Write-Host "▶ $msg" -ForegroundColor Blue }
 function Write-Skip($msg)    { Write-Host "[跳过]  $msg" -ForegroundColor Green }
 function Exit-WithError($msg) { Write-Host "[ERROR] $msg" -ForegroundColor Red; exit 1 }
+
+# 写入无 BOM 的 UTF-8 JSON 文件（避免 EchoBird 等工具无法解析带 BOM 的 JSON）
+function Write-JsonFile {
+    param([string]$Path, [object]$Data, [int]$Depth = 10)
+    $json = $Data | ConvertTo-Json -Depth $Depth
+    $utf8NoBom = New-Object System.Text.UTF8Encoding $false
+    [System.IO.File]::WriteAllText($Path, $json, $utf8NoBom)
+}
 
 # ── Banner ───────────────────────────────────────────────────
 Write-Host ""
@@ -238,7 +246,7 @@ function Invoke-CleanupAuthConflict {
             $settings = Get-Content $settingsFile -Raw | ConvertFrom-Json
             if ($settings.env -and $settings.env.PSObject.Properties.Match('ANTHROPIC_AUTH_TOKEN')) {
                 $settings.env.PSObject.Properties.Remove('ANTHROPIC_AUTH_TOKEN')
-                $settings | ConvertTo-Json -Depth 10 | Set-Content -Path $settingsFile -Encoding UTF8
+                Write-JsonFile -Path $settingsFile -Data $settings
                 Write-Success "已移除 settings.json 中的 ANTHROPIC_AUTH_TOKEN"
             }
         } catch {
@@ -466,24 +474,20 @@ $config = [ordered]@{
     }
 }
 
-$config | ConvertTo-Json -Depth 10 | Set-Content -Path $CONFIG_FILE -Encoding UTF8
+Write-JsonFile -Path $CONFIG_FILE -Data $config
 Write-Success "配置文件已写入: $CONFIG_FILE"
 Write-Info "默认模型: $MODEL"
 
-# ── 7. 配置环境变量 ──────────────────────────────────────────
+# ── 7. 配置环境变量（仅当前会话，不设置全局用户环境变量，避免影响 EchoBird 等其他工具） ──
 Write-Step "配置环境变量"
 
-# 持久化到用户环境
-[Environment]::SetEnvironmentVariable("ANTHROPIC_API_KEY", $API_KEY, "User")
-[Environment]::SetEnvironmentVariable("ANTHROPIC_BASE_URL", $API_BASE_URL, "User")
-[Environment]::SetEnvironmentVariable("ANTHROPIC_AUTH_TOKEN", $null, "User")
-
-# 当前会话生效
+# 仅当前会话生效（不写入用户环境变量，避免全局影响其他工具）
 $env:ANTHROPIC_API_KEY = $API_KEY
 $env:ANTHROPIC_BASE_URL = $API_BASE_URL
 $env:ANTHROPIC_AUTH_TOKEN = $null
 
-Write-Success "环境变量已写入用户环境"
+Write-Success "当前会话环境变量已设置（未写入全局用户环境，不影响其他工具）"
+Write-Info "持久化配置通过 ~/.claude/settings.json 的 env 块生效，仅影响 Claude Code"
 
 # ── 8. 同步 ~/.claude/settings.json ─────────────────────────
 Write-Step "同步 Claude 配置"
@@ -550,7 +554,7 @@ foreach ($key in $settingsHash.Keys) {
     }
 }
 
-$settingsOut | ConvertTo-Json -Depth 10 | Set-Content -Path $CLAUDE_SETTINGS -Encoding UTF8
+Write-JsonFile -Path $CLAUDE_SETTINGS -Data $settingsOut
 Write-Success "已同步 ~/.claude/settings.json"
 
 # ── 9. 写入 ~/.claude.json ─────────────────────────────────────
@@ -592,7 +596,7 @@ foreach ($key in @('apiBaseUrl', 'oauthAccount', 'authToken', 'sessionToken')) {
     }
 }
 
-$claudeState | ConvertTo-Json -Depth 5 | Set-Content -Path $CLAUDE_JSON -Encoding UTF8
+Write-JsonFile -Path $CLAUDE_JSON -Data $claudeState -Depth 5
 Write-Success "已创建/更新 ~/.claude.json"
 
 # ── 10. API 连通性验证 ─────────────────────────────────────────
@@ -627,8 +631,8 @@ Write-Host "使用方法:" -ForegroundColor Cyan
 Write-Host "  claude            # 启动 Claude Code"
 Write-Host ""
 Write-Host "说明:" -ForegroundColor Cyan
-Write-Host "  环境变量已写入用户环境，重启终端后生效。"
-Write-Host "  如果直接运行 claude 仍提示未登录，请重启 PowerShell。"
+Write-Host "  配置已写入 ~/.claude/settings.json（仅影响 Claude Code，不影响其他工具）。"
+Write-Host "  当前终端可直接运行 claude；新开终端也会自动读取 settings.json 配置。"
 Write-Host ""
 Write-Host "── 当前环境变量诊断 ────────────────────────────────" -ForegroundColor Cyan
 $keyLen = [Math]::Min(10, $env:ANTHROPIC_API_KEY.Length)
