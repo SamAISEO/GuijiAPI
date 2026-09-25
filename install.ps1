@@ -621,17 +621,79 @@ try {
     }
 }
 
-# ── 11. 完成 ──────────────────────────────────────────────────
+# ── 11. 配置 Claude Code 桌面版（3p 模式） ────────────────────
+Write-Step "配置 Claude Code 桌面版"
+
+$CCD_LIB = "$env:LOCALAPPDATA\Claude-3p\configLibrary"
+$CCD_CONFIG_ID = "00000000-0000-4000-8000-000000157299"
+$CCD_NAME = "硅基API 2.0"
+
+if (Test-Path $CCD_LIB) {
+    # 备份原配置库，防止误操作
+    $backupDir = "$env:LOCALAPPDATA\Claude-3p\configLibrary-backup-$(Get-Date -Format 'yyyyMMdd-HHmmss')"
+    Copy-Item $CCD_LIB $backupDir -Recurse -Force -ErrorAction SilentlyContinue
+    if (Test-Path $backupDir) {
+        Write-Info "已备份原桌面版配置库到: $backupDir"
+    }
+
+    # 构建模型列表（全部拉取的 claude 模型，默认模型排第一）
+    $modelList = @()
+    foreach ($m in $ALL_MODELS) {
+        $modelList += [PSCustomObject]@{ name = $m; supports1m = $true }
+    }
+    $modelList = @($modelList | Where-Object { $_.name -eq $MODEL }) + @($modelList | Where-Object { $_.name -ne $MODEL })
+
+    # 桌面版网关配置（注意：baseUrl 不带 /v1，SDK 会自动拼接 /v1/messages）
+    $desktopConfig = [PSCustomObject]@{
+        coworkEgressAllowedHosts     = @("*")
+        disableDeploymentModeChooser = $true
+        inferenceGatewayApiKey       = $API_KEY
+        inferenceGatewayAuthScheme   = "bearer"
+        inferenceGatewayBaseUrl      = $API_BASE_URL
+        inferenceModels              = $modelList
+        inferenceProvider            = "gateway"
+    }
+
+    # 写入/更新硅基API条目（无 BOM UTF-8）
+    Write-JsonFile -Path "$CCD_LIB\$CCD_CONFIG_ID.json" -Data $desktopConfig
+
+    # 更新 _meta.json：appliedId 指向硅基API，保留原条目并追加新条目
+    $metaPath = "$CCD_LIB\_meta.json"
+    $meta = [PSCustomObject]@{ appliedId = ""; entries = @() }
+    if (Test-Path $metaPath) {
+        try { $meta = Get-Content $metaPath -Raw | ConvertFrom-Json } catch { $meta = [PSCustomObject]@{ appliedId = ""; entries = @() } }
+    }
+    $entries = @()
+    if ($meta.entries) { $entries = @($meta.entries) }
+    $exists = $entries | Where-Object { $_.id -eq $CCD_CONFIG_ID }
+    if (-not $exists) {
+        $entries += [PSCustomObject]@{ id = $CCD_CONFIG_ID; name = $CCD_NAME }
+    }
+    $metaOut = [PSCustomObject]@{
+        appliedId = $CCD_CONFIG_ID
+        entries   = $entries
+    }
+    Write-JsonFile -Path $metaPath -Data $metaOut -Depth 5
+
+    Write-Success "桌面版已配置（网关: $API_BASE_URL，模型: $($modelList.Count) 个，默认: $MODEL）"
+    Write-Info "若桌面版正在运行，请完全退出后重新打开，新建会话即可使用硅基API"
+} else {
+    Write-Info "未检测到 Claude Code 桌面版安装目录，跳过桌面版配置（CLI 版已配置完成）"
+}
+
+# ── 12. 完成 ──────────────────────────────────────────────────
 Write-Step "完成"
 
 Write-Host ""
 Write-Host "✅ Claude Code 部署完成！" -ForegroundColor Green
 Write-Host ""
 Write-Host "使用方法:" -ForegroundColor Cyan
-Write-Host "  claude            # 启动 Claude Code"
+Write-Host "  claude            # 启动 Claude Code (CLI)"
+Write-Host "  桌面版            # 打开 Claude Code 桌面版（已配置硅基API网关）"
 Write-Host ""
 Write-Host "说明:" -ForegroundColor Cyan
-Write-Host "  配置已写入 ~/.claude/settings.json（仅影响 Claude Code，不影响其他工具）。"
+Write-Host "  CLI 配置已写入 ~/.claude/settings.json（仅影响 Claude Code，不影响其他工具）。"
+Write-Host "  桌面版配置已写入 Claude-3p\configLibrary（网关: https://api.guiji.co）。"
 Write-Host "  当前终端可直接运行 claude；新开终端也会自动读取 settings.json 配置。"
 Write-Host ""
 Write-Host "── 当前环境变量诊断 ────────────────────────────────" -ForegroundColor Cyan
