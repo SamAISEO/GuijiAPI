@@ -771,14 +771,12 @@ fi
 
 unset ANTHROPIC_AUTH_TOKEN ANTHROPIC_BASE_URL ANTHROPIC_API_KEY 2>/dev/null || true
 
-# 写入新值
-echo "export ANTHROPIC_API_KEY=\"${API_KEY}\"" >> "$ENV_RC"
-echo "export ANTHROPIC_BASE_URL=\"${API_BASE_URL}\"" >> "$ENV_RC"
-
+# 仅当前会话生效（不写入 RC 文件，避免全局影响 EchoBird 等其他工具）
 export ANTHROPIC_API_KEY="${API_KEY}"
 export ANTHROPIC_BASE_URL="${API_BASE_URL}"
 
-success "环境变量已写入 ${ENV_RC}"
+success "当前会话环境变量已设置（未写入全局 RC 文件，不影响其他工具）"
+info "持久化配置通过 ~/.claude/settings.json 的 env 块生效，仅影响 Claude Code"
 
 # 同步 Claude Code 全局 settings.json
 if command -v python3 &>/dev/null; then
@@ -894,7 +892,80 @@ else
   skip "未找到 curl，跳过连通性验证"
 fi
 
-# ── 10. 完成 ──────────────────────────────────────────────────
+# ── 10. 配置 Claude Code 桌面版（3p 模式） ────────────────────
+step "配置 Claude Code 桌面版"
+
+CCD_LIB=""
+for _cand in "$HOME/Library/Application Support/Claude-3p/configLibrary" "$HOME/Library/Application Support/Claude/configLibrary"; do
+  if [ -d "$_cand" ]; then CCD_LIB="$_cand"; break; fi
+done
+
+if [ -n "$CCD_LIB" ]; then
+  # 备份原配置库，防止误操作
+  BACKUP_DIR="${CCD_LIB}-backup-$(date +%Y%m%d-%H%M%S)"
+  cp -r "$CCD_LIB" "$BACKUP_DIR" 2>/dev/null && info "已备份原桌面版配置库到: $BACKUP_DIR"
+
+  CCD_CONFIG_ID="00000000-0000-4000-8000-000000157299"
+  CCD_NAME="硅基API 2.0"
+
+  if command -v python3 &>/dev/null; then
+    python3 - "$CCD_LIB" "$CCD_CONFIG_ID" "$CCD_NAME" "$API_KEY" "$API_BASE_URL" "${ALL_MODELS[@]}" "$MODEL" <<'PYEOF'
+import json, sys, os
+lib, cid, name, api_key, base_url = sys.argv[1:6]
+models = sys.argv[6:-1]
+default_model = sys.argv[-1]
+
+# 模型列表：默认模型排第一，去重
+model_list = []
+seen = set()
+for m in [default_model] + list(models):
+    if m not in seen:
+        seen.add(m)
+        model_list.append({"name": m, "supports1m": True})
+
+# 桌面版网关配置（注意：baseUrl 不带 /v1，SDK 会自动拼接 /v1/messages）
+config = {
+    "coworkEgressAllowedHosts": ["*"],
+    "disableDeploymentModeChooser": True,
+    "inferenceGatewayApiKey": api_key,
+    "inferenceGatewayAuthScheme": "bearer",
+    "inferenceGatewayBaseUrl": base_url,
+    "inferenceModels": model_list,
+    "inferenceProvider": "gateway",
+}
+
+# 写入条目（json.dump 默认 UTF-8 无 BOM）
+entry_path = os.path.join(lib, cid + ".json")
+with open(entry_path, "w", encoding="utf-8") as f:
+    json.dump(config, f, indent=2)
+
+# 更新 _meta.json：appliedId 指向硅基API，保留原条目并追加新条目
+meta_path = os.path.join(lib, "_meta.json")
+meta = {"appliedId": "", "entries": []}
+if os.path.exists(meta_path):
+    try:
+        with open(meta_path, encoding="utf-8") as f:
+            meta = json.load(f)
+    except Exception:
+        meta = {"appliedId": "", "entries": []}
+entries = meta.get("entries", [])
+if not any(e.get("id") == cid for e in entries):
+    entries.append({"id": cid, "name": name})
+meta["appliedId"] = cid
+meta["entries"] = entries
+with open(meta_path, "w", encoding="utf-8") as f:
+    json.dump(meta, f, indent=2)
+PYEOF
+    success "桌面版已配置（网关: ${API_BASE_URL}，模型: ${#ALL_MODELS[@]} 个，默认: ${MODEL}）"
+    info "若桌面版正在运行，请完全退出后重新打开，新建会话即可使用硅基API"
+  else
+    warn "未找到 python3，跳过桌面版配置"
+  fi
+else
+  info "未检测到 Claude Code 桌面版安装目录，跳过桌面版配置（CLI 版已配置完成）"
+fi
+
+# ── 11. 完成 ──────────────────────────────────────────────────
 step "完成"
 
 GLOBAL_BIN=$(get_npm_global_bin)
@@ -902,15 +973,14 @@ GLOBAL_BIN=$(get_npm_global_bin)
 echo ""
 echo -e "${GREEN}${BOLD}✅ Claude Code 部署完成！${NC}"
 echo ""
-echo -e "${YELLOW}${BOLD}⚠ 重要：请重新打开终端窗口，或执行以下命令使环境变量生效：${NC}"
-echo -e "  ${CYAN}source ${ENV_RC}${NC}"
-echo ""
 echo -e "${CYAN}使用方法:${NC}"
-echo "  claude            # 启动 Claude Code"
+echo "  claude            # 启动 Claude Code (CLI)"
+echo "  桌面版            # 打开 Claude Code 桌面版（已配置硅基API网关）"
 echo ""
 echo -e "${CYAN}说明:${NC}"
-echo "  已写入 ${ENV_RC}，并同步到 ~/.claude/settings.json。"
-echo "  如果直接运行 claude 仍连接 api.anthropic.com，请先执行: source ${ENV_RC}"
+echo "  CLI 配置已同步到 ~/.claude/settings.json（仅影响 Claude Code，不影响其他工具）。"
+echo "  桌面版配置已写入 Claude-3p/configLibrary（网关: ${API_BASE_URL}）。"
+echo "  当前终端可直接运行 claude；新开终端也会自动读取 settings.json 配置。"
 echo ""
 
 # 检查 PATH
