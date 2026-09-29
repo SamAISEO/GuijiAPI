@@ -338,8 +338,8 @@ function Invoke-SaveCurrentEnvSnapshot {
 function Invoke-CleanupThirdParty {
     $oldUrl = Get-ExistingClaudeUrl
     Write-Warn "检测到第三方中转站配置: $(if ($oldUrl) { $oldUrl } else { '（未知）' })"
-    Write-Warn "将删除旧的 Claude 配置目录和缓存文件，然后重建。"
-    $confirm = Read-Host "是否继续清理并重装？(Y/n，默认 Y)"
+    Write-Warn "将仅更新 Claude Code 配置文件，保留插件/命令/Agent 等用户数据。"
+    $confirm = Read-Host "是否继续安装硅基API配置？(Y/n，默认 Y)"
     if ([string]::IsNullOrWhiteSpace($confirm)) { $confirm = "Y" }
     if ($confirm -match '^[Nn]') { Exit-WithError "用户取消，退出" }
 
@@ -348,24 +348,17 @@ function Invoke-CleanupThirdParty {
     npm uninstall -g @musistudio/claude-code-router 2>$null | Out-Null
     Write-Success "旧 npm 包已卸载"
 
-    $dirs = @(
-        "$env:USERPROFILE\.claude-code-router",
-        "$env:USERPROFILE\.claude"
+    # 只清理脚本管理的配置文件，保留 plugins/commands/agents/hooks 等用户数据
+    $managedFiles = @(
+        "$env:USERPROFILE\.claude\settings.json",
+        "$env:USERPROFILE\.claude\.credentials.json",
+        "$env:USERPROFILE\.claude-code-router\config.json"
     )
-    foreach ($dir in $dirs) {
-        if (Test-Path $dir) {
-            Write-Info "删除 $dir ..."
-            Remove-Item -Recurse -Force $dir -ErrorAction SilentlyContinue
-            Write-Success "已删除 $dir"
-        }
-    }
-
-    $files = @("$env:USERPROFILE\.claude.json")
-    foreach ($file in $files) {
+    foreach ($file in $managedFiles) {
         if (Test-Path $file) {
-            Write-Info "删除 $file ..."
+            Write-Info "重置 $file ..."
             Remove-Item -Force $file -ErrorAction SilentlyContinue
-            Write-Success "已删除 $file"
+            Write-Success "已重置 $file"
         }
     }
 

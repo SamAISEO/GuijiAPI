@@ -403,8 +403,8 @@ cleanup_third_party() {
 
   warn "检测到第三方中转站配置: ${old_url:-（未知）}"
   [ -n "$reason" ] && warn "$reason"
-  warn "将删除旧的 Claude 配置目录和错误 JSON，然后重建。"
-  CONFIRM=$(read_input "是否继续清理并重装？(Y/n，默认 Y): ")
+  warn "将仅更新 Claude Code 配置文件，保留插件/命令/Agent 等用户数据。"
+  CONFIRM=$(read_input "是否继续安装硅基API配置？(Y/n，默认 Y): ")
   CONFIRM="${CONFIRM:-Y}"
   case "$CONFIRM" in
     [Nn]*) error "用户取消，退出" ;;
@@ -423,23 +423,21 @@ cleanup_third_party() {
   $_sudo_npm uninstall -g @musistudio/claude-code-router 2>/dev/null || true
   success "旧 npm 包已卸载"
 
-  info "删除旧配置目录 ~/.claude-code-router ..."
-  rm -rf "$HOME/.claude-code-router"
-  success "已删除 ~/.claude-code-router"
+  info "重置 ~/.claude-code-router/config.json ..."
+  rm -f "$HOME/.claude-code-router/config.json"
+  success "已重置 ~/.claude-code-router/config.json"
 
-  info "删除 Claude 配置目录 ~/.claude ..."
-  rm -rf "$HOME/.claude"
-  success "已删除 ~/.claude"
+  info "重置 ~/.claude 受管配置文件（保留 plugins/commands/agents 等）..."
+  rm -f "$HOME/.claude/settings.json" "$HOME/.claude/.credentials.json"
+  success "已重置 ~/.claude 受管配置文件"
 
   if [ "$PWD" != "$HOME" ] && [ -d "$PWD/.claude" ]; then
-    info "删除当前目录下的共享 Claude 配置 $PWD/.claude ..."
-    rm -rf "$PWD/.claude"
-    success "已删除 $PWD/.claude"
+    info "重置当前目录共享配置 $PWD/.claude/settings.json ..."
+    rm -f "$PWD/.claude/settings.json"
+    success "已重置 $PWD/.claude/settings.json"
   fi
 
-  info "删除错误的 ~/.claude.json ..."
-  rm -f "$HOME/.claude.json"
-  success "已删除 ~/.claude.json"
+  info "保留 ~/.claude.json（项目历史与信任状态不重置）..."
 
   if [ -f "/etc/claude-code/managed-settings.json" ] && [ -w "/etc/claude-code/managed-settings.json" ]; then
     info "删除系统级 Claude managed settings ..."
