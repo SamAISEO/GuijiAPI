@@ -349,6 +349,51 @@ is_third_party_config() {
   return 1
 }
 
+# 保存当前 CLI 环境快照（多服务商共存支持）
+save_current_env_snapshot() {
+  local settings_file="$HOME/.claude/settings.json"
+  [ -f "$settings_file" ] || return 0
+
+  local base_url
+  base_url=$(SETTINGS_FILE="$settings_file" python3 -c "
+import json, os
+try:
+    with open(os.environ['SETTINGS_FILE']) as f:
+        d = json.load(f)
+    print(d.get('env', {}).get('ANTHROPIC_BASE_URL', ''))
+except Exception:
+    print('')
+" 2>/dev/null)
+  [ -n "$base_url" ] || { info "当前 settings.json 未配置 API 地址，跳过环境快照"; return 0; }
+
+  # 根据 API 地址推断环境名
+  local env_name="other"
+  case "$base_url" in
+    *deepseek*) env_name="deepseek" ;;
+    *bigmodel*|*zhipu*|*z.ai*) env_name="zhipu" ;;
+    *moonshot*|*kimi*) env_name="kimi" ;;
+    *api.anthropic*) env_name="anthropic" ;;
+    *guiji*) env_name="guijiapi" ;;
+    *openai*) env_name="openai" ;;
+  esac
+
+  echo ""
+  local save_choice
+  save_choice=$(read_input "检测到当前环境: ${base_url}\n是否保存为环境快照（之后可用切换器一键切回）？(Y/n，默认 Y): ")
+  save_choice="${save_choice:-Y}"
+  case "$save_choice" in
+    [Nn]*) warn "跳过保存，将直接覆盖当前配置"; return 0 ;;
+  esac
+
+  local name=""
+  read -r -p "请输入环境名称（默认: ${env_name}）: " name < /dev/tty || true
+  [ -z "$name" ] && name="$env_name"
+
+  mkdir -p "$HOME/.claude/environments/$name"
+  cp "$settings_file" "$HOME/.claude/environments/$name/settings.json"
+  success "已保存环境快照: $name → ~/.claude/environments/$name/"
+}
+
 # 清理第三方配置、包、环境变量及 claude 状态
 cleanup_third_party() {
   local old_url
@@ -443,6 +488,7 @@ install_or_skip_npm_pkg() {
 # ── 1. 检测并清理第三方配置 ──────────────────────────────────
 step "检测现有配置"
 if is_third_party_config; then
+  save_current_env_snapshot
   cleanup_third_party
   success "清理完成，继续安装..."
 else
@@ -990,6 +1036,27 @@ else
   info "未检测到 Claude Code 桌面版安装目录，跳过桌面版配置（CLI 版已配置完成）"
 fi
 
+# ── 10.5 保存硅基API环境并生成切换器 ─────────────────────────
+step "保存环境快照并生成切换器"
+
+# 保存硅基API环境快照（切换器可切回）
+mkdir -p "$HOME/.claude/environments/guijiapi"
+cp "$HOME/.claude/settings.json" "$HOME/.claude/environments/guijiapi/settings.json"
+success "已保存环境快照: guijiapi"
+
+# 下载切换器到桌面
+SWITCHER_PATH="$HOME/Desktop/claude-env.sh"
+if command -v curl &>/dev/null; then
+  if curl -fsSL --max-time 15 -o "$SWITCHER_PATH" "https://raw.githubusercontent.com/SamAISEO/GuijiAPI/main/claude-env.sh"; then
+    chmod +x "$SWITCHER_PATH" 2>/dev/null || true
+    success "已生成环境切换器: $SWITCHER_PATH"
+  else
+    warn "切换器下载失败，可稍后手动获取 claude-env.sh"
+  fi
+else
+  warn "未找到 curl，跳过切换器下载"
+fi
+
 # ── 11. 完成 ──────────────────────────────────────────────────
 step "完成"
 
@@ -1001,6 +1068,7 @@ echo ""
 echo -e "${CYAN}使用方法:${NC}"
 echo "  claude            # 启动 Claude Code (CLI)"
 echo "  桌面版            # 打开 Claude Code 桌面版（已配置硅基API网关）"
+echo "  切换器            # 桌面 claude-env.sh（多服务商一键切换）"
 echo ""
 echo -e "${CYAN}说明:${NC}"
 echo "  CLI 配置已同步到 ~/.claude/settings.json（仅影响 Claude Code，不影响其他工具）。"

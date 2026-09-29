@@ -293,6 +293,48 @@ function Test-ThirdPartyConfig {
     return $false
 }
 
+function Invoke-SaveCurrentEnvSnapshot {
+    $settingsFile = "$env:USERPROFILE\.claude\settings.json"
+    if (-not (Test-Path $settingsFile)) { return }
+
+    $baseUrl = $null
+    try {
+        $settings = Get-Content $settingsFile -Raw | ConvertFrom-Json
+        if ($settings.env) { $baseUrl = $settings.env.ANTHROPIC_BASE_URL }
+    } catch { return }
+
+    if (-not $baseUrl) {
+        Write-Info "当前 settings.json 未配置 API 地址，跳过环境快照"
+        return
+    }
+
+    # 根据 API 地址推断环境名
+    $envName = "other"
+    if ($baseUrl -match 'deepseek') { $envName = "deepseek" }
+    elseif ($baseUrl -match 'bigmodel|zhipu|z\.ai') { $envName = "zhipu" }
+    elseif ($baseUrl -match 'moonshot|kimi') { $envName = "kimi" }
+    elseif ($baseUrl -match 'api\.anthropic') { $envName = "anthropic" }
+    elseif ($baseUrl -match 'guiji') { $envName = "guijiapi" }
+    elseif ($baseUrl -match 'openai') { $envName = "openai" }
+
+    Write-Host ""
+    $saveChoice = Read-Host "检测到当前环境: $baseUrl`n是否保存为环境快照（之后可用切换器一键切回）？(Y/n，默认 Y)"
+    if ([string]::IsNullOrWhiteSpace($saveChoice)) { $saveChoice = "Y" }
+    if ($saveChoice -match '^[Nn]') {
+        Write-Warn "跳过保存，将直接覆盖当前配置"
+        return
+    }
+
+    $name = Read-Host "请输入环境名称（默认: $envName）"
+    if ([string]::IsNullOrWhiteSpace($name)) { $name = $envName }
+    $name = $name.Trim()
+
+    $envDir = "$env:USERPROFILE\.claude\environments\$name"
+    New-Item -ItemType Directory -Path $envDir -Force | Out-Null
+    Copy-Item $settingsFile "$envDir\settings.json" -Force
+    Write-Success "已保存环境快照: $name → ~/.claude/environments/$name/"
+}
+
 function Invoke-CleanupThirdParty {
     $oldUrl = Get-ExistingClaudeUrl
     Write-Warn "检测到第三方中转站配置: $(if ($oldUrl) { $oldUrl } else { '（未知）' })"
@@ -340,6 +382,7 @@ function Invoke-CleanupThirdParty {
 # ── 1. 检测并清理第三方配置 ──────────────────────────────────
 Write-Step "检测现有配置"
 if (Test-ThirdPartyConfig) {
+    Invoke-SaveCurrentEnvSnapshot
     Invoke-CleanupThirdParty
     Write-Success "清理完成，继续安装..."
 } else {
@@ -707,7 +750,27 @@ if (Test-Path $CCD_LIB) {
     Write-Info "未检测到 Claude Code 桌面版安装目录，跳过桌面版配置（CLI 版已配置完成）"
 }
 
-# ── 12. 完成 ──────────────────────────────────────────────────
+# ── 12. 保存硅基API环境并生成切换器 ─────────────────────────
+Write-Step "保存环境快照并生成切换器"
+
+# 保存硅基API环境快照（切换器可切回）
+$guijiEnvDir = "$env:USERPROFILE\.claude\environments\guijiapi"
+New-Item -ItemType Directory -Path $guijiEnvDir -Force | Out-Null
+Copy-Item $CLAUDE_SETTINGS "$guijiEnvDir\settings.json" -Force
+Write-Success "已保存环境快照: guijiapi"
+
+# 下载切换器到桌面
+$switchPath = "$env:USERPROFILE\Desktop\Claude-Env.ps1"
+try {
+    $swResp = Invoke-WebRequest -Uri "https://raw.githubusercontent.com/SamAISEO/GuijiAPI/main/Claude-Env.ps1" -UseBasicParsing -TimeoutSec 15 -ErrorAction Stop
+    $swUtf8 = New-Object System.Text.UTF8Encoding $true   # 必须带 BOM：PowerShell 5.1 按 ANSI 读取无 BOM 的中文脚本会乱码报错
+    [System.IO.File]::WriteAllText($switchPath, $swResp.Content, $swUtf8)
+    Write-Success "已生成环境切换器: $switchPath"
+} catch {
+    Write-Warn "切换器下载失败，可稍后手动获取 Claude-Env.ps1"
+}
+
+# ── 13. 完成 ──────────────────────────────────────────────────
 Write-Step "完成"
 
 Write-Host ""
@@ -716,6 +779,7 @@ Write-Host ""
 Write-Host "使用方法:" -ForegroundColor Cyan
 Write-Host "  claude            # 启动 Claude Code (CLI)"
 Write-Host "  桌面版            # 打开 Claude Code 桌面版（已配置硅基API网关）"
+Write-Host "  切换器            # 桌面 Claude-Env.ps1（多服务商一键切换）"
 Write-Host ""
 Write-Host "说明:" -ForegroundColor Cyan
 Write-Host "  CLI 配置已写入 ~/.claude/settings.json（仅影响 Claude Code，不影响其他工具）。"
