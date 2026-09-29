@@ -909,7 +909,32 @@ if [ -n "$CCD_LIB" ]; then
   CCD_NAME="硅基API 2.0"
 
   if command -v python3 &>/dev/null; then
-    python3 - "$CCD_LIB" "$CCD_CONFIG_ID" "$CCD_NAME" "$API_KEY" "$API_BASE_URL" "${ALL_MODELS[@]}" "$MODEL" <<'PYEOF'
+    # 让用户为桌面版单独选择默认模型（与 CLI 版分开）
+    echo ""
+    DESKTOP_CHOICE=$(read_input "是否为桌面版单独选择默认模型？(Y/n，默认 Y): ")
+    if [[ "$DESKTOP_CHOICE" =~ ^(n|N|no|NO|0)$ ]]; then
+      DESKTOP_MODEL="$MODEL"
+      info "桌面版使用与 CLI 相同的默认模型: $DESKTOP_MODEL"
+    else
+      echo -e "${CYAN}请为桌面版选择默认模型:${NC}"
+      MODEL_COUNT=${#ALL_MODELS[@]}
+      for i in $(seq 0 $((MODEL_COUNT - 1))); do
+        marker=""
+        if [ $i -eq 0 ]; then marker="（推荐）"; fi
+        echo -e "${CYAN}  $((i+1))) ${ALL_MODELS[$i]} $marker${NC}"
+      done
+      echo ""
+      DESKTOP_CHOICE=$(read_input "请选择桌面版默认模型 (1/$MODEL_COUNT，默认 1): ")
+      DESKTOP_CHOICE="${DESKTOP_CHOICE:-1}"
+      DESKTOP_INDEX=$((DESKTOP_CHOICE - 1))
+      if [ "$DESKTOP_INDEX" -lt 0 ] || [ "$DESKTOP_INDEX" -ge "$MODEL_COUNT" ]; then
+        DESKTOP_INDEX=0
+      fi
+      DESKTOP_MODEL="${ALL_MODELS[$DESKTOP_INDEX]}"
+      success "桌面版默认模型: $DESKTOP_MODEL"
+    fi
+
+    python3 - "$CCD_LIB" "$CCD_CONFIG_ID" "$CCD_NAME" "$API_KEY" "$API_BASE_URL" "${ALL_MODELS[@]}" "$DESKTOP_MODEL" <<'PYEOF' 
 import json, sys, os
 lib, cid, name, api_key, base_url = sys.argv[1:6]
 models = sys.argv[6:-1]
@@ -956,7 +981,7 @@ meta["entries"] = entries
 with open(meta_path, "w", encoding="utf-8") as f:
     json.dump(meta, f, indent=2)
 PYEOF
-    success "桌面版已配置（网关: ${API_BASE_URL}，模型: ${#ALL_MODELS[@]} 个，默认: ${MODEL}）"
+    success "桌面版已配置（网关: ${API_BASE_URL}，模型: ${#ALL_MODELS[@]} 个，默认: ${DESKTOP_MODEL}）"
     info "若桌面版正在运行，请完全退出后重新打开，新建会话即可使用硅基API"
   else
     warn "未找到 python3，跳过桌面版配置"

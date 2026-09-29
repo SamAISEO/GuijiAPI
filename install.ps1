@@ -641,7 +641,33 @@ if (Test-Path $CCD_LIB) {
     foreach ($m in $ALL_MODELS) {
         $modelList += [PSCustomObject]@{ name = $m; supports1m = $true }
     }
-    $modelList = @($modelList | Where-Object { $_.name -eq $MODEL }) + @($modelList | Where-Object { $_.name -ne $MODEL })
+    # 让用户为桌面版单独选择默认模型（与 CLI 版分开）
+    Write-Host ""
+    $desktopChoice = Read-Host "是否为桌面版单独选择默认模型？(Y/n，默认 Y)"
+    if ($desktopChoice -match '^(n|N|no|NO|0)$') {
+        $DESKTOP_MODEL = $MODEL
+        Write-Info "桌面版使用与 CLI 相同的默认模型: $DESKTOP_MODEL"
+    } else {
+        Write-Host "请为桌面版选择默认模型:" -ForegroundColor Cyan
+        for ($i = 0; $i -lt $ALL_MODELS.Count; $i++) {
+            $marker = if ($i -eq 0) { "（推荐）" } else { "" }
+            Write-Host "  $($i+1)) $($ALL_MODELS[$i]) $marker" -ForegroundColor Cyan
+        }
+        Write-Host ""
+        $dIndexInput = Read-Host "请选择桌面版默认模型 (1/$($ALL_MODELS.Count)，默认 1)"
+        if ([string]::IsNullOrWhiteSpace($dIndexInput)) { $dIndexInput = "1" }
+        $dIndex = [int]$dIndexInput - 1
+        if ($dIndex -lt 0 -or $dIndex -ge $ALL_MODELS.Count) { $dIndex = 0 }
+        $DESKTOP_MODEL = $ALL_MODELS[$dIndex]
+        Write-Success "桌面版默认模型: $DESKTOP_MODEL"
+    }
+
+    # 构建模型列表（全部拉取的 claude 模型，桌面版默认模型排第一）
+    $modelList = @()
+    foreach ($m in $ALL_MODELS) {
+        $modelList += [PSCustomObject]@{ name = $m; supports1m = $true }
+    }
+    $modelList = @($modelList | Where-Object { $_.name -eq $DESKTOP_MODEL }) + @($modelList | Where-Object { $_.name -ne $DESKTOP_MODEL })
 
     # 桌面版网关配置（注意：baseUrl 不带 /v1，SDK 会自动拼接 /v1/messages）
     $desktopConfig = [PSCustomObject]@{
@@ -675,7 +701,7 @@ if (Test-Path $CCD_LIB) {
     }
     Write-JsonFile -Path $metaPath -Data $metaOut -Depth 5
 
-    Write-Success "桌面版已配置（网关: $API_BASE_URL，模型: $($modelList.Count) 个，默认: $MODEL）"
+    Write-Success "桌面版已配置（网关: $API_BASE_URL，模型: $($modelList.Count) 个，默认: $DESKTOP_MODEL）"
     Write-Info "若桌面版正在运行，请完全退出后重新打开，新建会话即可使用硅基API"
 } else {
     Write-Info "未检测到 Claude Code 桌面版安装目录，跳过桌面版配置（CLI 版已配置完成）"
